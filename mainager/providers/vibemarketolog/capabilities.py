@@ -49,13 +49,16 @@ def write_snapshot(payload: dict[str, Any], data_dir: Path) -> Path:
     """Write the catalog to ``<data_dir>/capabilities.json``, sorted and indented.
 
     Stable formatting keeps the diff readable when the catalog drifts, which is
-    the point of tracking the snapshot at all.
+    the point of tracking the snapshot at all. Line endings are pinned to LF for
+    the same reason: the snapshot must not change just because it was refreshed
+    on a different platform.
     """
     data_dir.mkdir(parents=True, exist_ok=True)
     destination = data_dir / SNAPSHOT_FILENAME
     destination.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     return destination
 
