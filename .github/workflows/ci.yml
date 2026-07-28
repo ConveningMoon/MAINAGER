@@ -47,9 +47,9 @@ jobs:
       MAINAGER_TEST_POSTGRES_DSN: postgresql://mainager:mainager@localhost:5432/mainager
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
