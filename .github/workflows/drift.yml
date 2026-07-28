@@ -1,0 +1,83 @@
+name: drift
+
+# The catalog and the price list disagree, and the disagreement moves: three
+# different states were observed in a single working day. One reading is an
+# anecdote; a daily series is a measurement. This job takes that reading and
+# appends it to data/drift-log.jsonl.
+#
+# Free endpoints only — GET /capabilities and GET /prices. Nothing is generated,
+# nothing is charged. Requires the VIBE_API_TOKEN repository secret.
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # 06:17 UTC daily; an odd minute avoids the top-of-hour rush
+  workflow_dispatch: # so it can also be run by hand
+
+permissions:
+  contents: write
+
+concurrency:
+  group: drift
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    # A fork has no secret, and a job that cannot authenticate should not run.
+    if: github.repository == 'ConveningMoon/MAINAGER'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Take a reading
+        env:
+          VIBE_API_TOKEN: ${{ secrets.VIBE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VIBE_API_TOKEN}" ]; then
+            echo "::error::VIBE_API_TOKEN secret is not set; nothing to observe"
+            exit 1
+          fi
+          mkdir -p data
+          mainager drift --json >> data/drift-log.jsonl
+          tail -1 data/drift-log.jsonl
+
+      - name: Record it only if something moved
+        run: |
+          set -euo pipefail
+          git config user.name "drift monitor"
+          git config user.email "drift@users.noreply.github.com"
+
+          # Compare against the previous reading, ignoring the timestamp: an
+          # identical day is not worth a commit, and a log of unchanged rows
+          # hides the days that did change.
+          python - <<'PY'
+          import json, pathlib, sys
+          rows = [json.loads(l) for l in pathlib.Path("data/drift-log.jsonl").read_text().splitlines() if l.strip()]
+          if len(rows) < 2:
+              sys.exit(0)
+          latest, previous = rows[-1], rows[-2]
+          strip = lambda r: {k: v for k, v in r.items() if k != "observed_at"}
+          if strip(latest) == strip(previous):
+              pathlib.Path("data/drift-log.jsonl").write_text(
+                  "\n".join(json.dumps(r, ensure_ascii=False, sort_keys=True) for r in rows[:-1]) + "\n",
+                  encoding="utf-8",
+              )
+              print("no change since the previous reading; dropping the duplicate row")
+          PY
+
+          if git diff --quiet -- data/drift-log.jsonl; then
+            echo "nothing to record"
+          else
+            git add data/drift-log.jsonl
+            git commit -m "record drift reading [skip ci]"
+            git push
+          fi

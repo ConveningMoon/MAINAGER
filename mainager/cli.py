@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,16 +46,47 @@ async def _dump_capabilities(settings: Settings) -> int:
     return 0
 
 
-async def _report_drift(settings: Settings) -> int:
-    """Compare the live catalog against the live price list."""
+async def _report_drift(settings: Settings, as_json: bool = False) -> int:
+    """Compare the live catalog against the live price list.
+
+    Text mode exits 1 when the two disagree, so it can gate a build. JSON mode
+    always exits 0: it is a reading, not a verdict, and a monitor that fails on
+    a finding stops recording exactly when the finding appears.
+    """
     registry = ModelRegistry.from_capabilities(await fetch_capabilities(settings))
     async with VibePricer.client_for(settings) as client:
         response = await client.get("/prices")
         if response.is_error:
             raise VibeApiError.from_response(response)
-        prices = flatten_prices(response.json())
+        payload = response.json()
+        prices = flatten_prices(payload)
 
     drift = reconcile(registry, prices)
+
+    if as_json:
+        unlisted, (parent, gap) = unlisted_tiers(registry, prices)
+        print(
+            json.dumps(
+                {
+                    "observed_at": datetime.now(UTC).isoformat(timespec="seconds"),
+                    # Includes tiers expanded into their own callable ids, so this is
+                    # larger than the 45 models the catalog lists as models.
+                    "routable_ids": len(registry.ids()),
+                    "price_keys": len(prices),
+                    "hidden_non_generation_keys": payload.get("hidden_non_generation_keys"),
+                    "generatable_without_price": list(drift.generatable_without_price),
+                    "priced_without_model": list(drift.priced_without_model),
+                    "category_mismatch": [list(m) for m in drift.category_mismatch],
+                    "unlisted_tiers": [list(u) for u in unlisted],
+                    "ceiling_gap_rub": gap,
+                    "ceiling_gap_model": parent or None,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+        return 0
+
     print(drift.summary())
     for model_id in drift.generatable_without_price:
         print(f"  no price       {model_id}")
@@ -118,9 +150,15 @@ def main(argv: list[str] | None = None) -> int:
         "capabilities",
         help="fetch GET /capabilities and write the snapshot to the data directory",
     )
-    subcommands.add_parser(
+    drift_cmd = subcommands.add_parser(
         "drift",
         help="report disagreements between the model catalog and the price list",
+    )
+    drift_cmd.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help="emit one JSON object for appending to a drift log; always exits 0",
     )
     overspend = subcommands.add_parser(
         "overspend",
@@ -146,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "capabilities":
             return asyncio.run(_dump_capabilities(settings))
         if args.command == "drift":
-            return asyncio.run(_report_drift(settings))
+            return asyncio.run(_report_drift(settings, as_json=args.as_json))
         if args.command == "overspend":
             return asyncio.run(_report_overspend(settings, args.from_file))
     except VibeApiError as exc:
