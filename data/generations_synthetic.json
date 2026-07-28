@@ -1,0 +1,72 @@
+{
+  "_note": "SYNTHETIC. Not a real account history. The account this project was built on has never run a paid generation (GET /generations returns total: 0), so this file exists only to demonstrate `mainager overspend` end to end. Model ids, prices and parameter shapes are taken from the real catalog and from dry-run measurements on 2026-07-28; the generations themselves never happened.",
+  "status": "ok",
+  "total": 6,
+  "generations": [
+    {
+      "id": "syn_1",
+      "type": "video",
+      "model": "grok-itv-20",
+      "cost": 316,
+      "status": "complete",
+      "params": {
+        "prompt": "slow pan over the product on a marble surface",
+        "duration": 5,
+        "image_urls": ["https://cdn.example/hero.png"]
+      }
+    },
+    {
+      "id": "syn_2",
+      "type": "video",
+      "model": "grok-itv-10",
+      "cost": 196,
+      "status": "complete",
+      "params": {
+        "prompt": "product rotating slowly",
+        "duration": 6,
+        "image_urls": ["https://cdn.example/hero.png"]
+      }
+    },
+    {
+      "id": "syn_3",
+      "type": "video",
+      "model": "kling-3.0-std",
+      "cost": 250,
+      "status": "complete",
+      "params": {
+        "prompt": "camera pulls back from the storefront",
+        "duration": 5,
+        "image_urls": ["https://cdn.example/shop.png"]
+      }
+    },
+    {
+      "id": "syn_4",
+      "type": "image",
+      "model": "z-image",
+      "cost": 1.2,
+      "status": "complete",
+      "params": { "prompt": "flat lay of autumn products" }
+    },
+    {
+      "id": "syn_5",
+      "type": "video",
+      "model": "veo3",
+      "cost": 570,
+      "status": "error",
+      "refunded": true,
+      "params": {
+        "prompt": "drone shot over the warehouse",
+        "duration": 10,
+        "image_urls": ["https://cdn.example/warehouse.png"]
+      }
+    },
+    {
+      "id": "syn_6",
+      "type": "video",
+      "model": "veo2-legacy",
+      "cost": 480,
+      "status": "complete",
+      "params": { "prompt": "old campaign clip", "duration": 8 }
+    }
+  ]
+}
