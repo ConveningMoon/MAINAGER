@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-mcp = ["mcp>=1.2"]
+mcp = ["mcp>=1.2,<2"]  # see the note on the same pin in `dev`
 infra = ["redis>=5.0", "psycopg[binary]>=3.1"]
 dev = [
     "pytest>=8.2",
@@ -30,7 +30,12 @@ dev = [
     "respx>=0.21",
     "mypy>=1.10",
     "ruff>=0.5",
-    "mcp>=1.2",
+    # Pinned below 2.0: that release renames the SDK surface the proxy is written
+    # against (inputSchema -> input_schema, isError -> is_error,
+    # streamablehttp_client -> streamable_http_client) and re-generics Server.
+    # The wire protocol is unchanged; this is an SDK rename, so the pin buys time
+    # rather than papering over a real incompatibility.
+    "mcp>=1.2,<2",
     "redis>=5.0",
     "psycopg[binary]>=3.1",
 ]

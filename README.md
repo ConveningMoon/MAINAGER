@@ -1,6 +1,9 @@
 # MAINAGER
 
+[![ci](https://github.com/ConveningMoon/MAINAGER/actions/workflows/ci.yml/badge.svg)](https://github.com/ConveningMoon/MAINAGER/actions/workflows/ci.yml)
+
 **Наглядный разбор: [conveningmoon.github.io/MAINAGER](https://conveningmoon.github.io/MAINAGER/)**
+· [Проведённые проверки](https://conveningmoon.github.io/MAINAGER/tests.html)
 
 Контур управления между автономным агентом и генеративным API: что вызвать,
 стоит ли вызывать, сколько это стоило и был ли результат пригоден.
