@@ -117,16 +117,17 @@
   <h1>Что именно проверялось и чем</h1>
   <p class="lede">Полный список замеров, на которых построен разбор: какой эндпоинт,
   какое тело запроса, какой ответ и сколько это стоило. Ничего не взято из
-  документации на веру — кроме одного пункта, который мы отдельно проверили платно.</p>
-  <p class="stamp">28.07.2026 · ключ уровня read+generate · обращений к платному эндпоинту: 1 ·
-  списано: <b>0 ₽</b></p>
+  документации на веру — кроме одного пункта, который мы отдельно проверили платно,
+  парой вызовов на 1,2 ₽.</p>
+  <p class="stamp">28.07.2026 · ключ уровня read+generate · обращений к платному эндпоинту: 2 ·
+  списано: <b>1,2 ₽ из 600</b></p>
 </header>
 
 <div class="tiles">
-  <div class="tile ok"><div class="v">0 ₽</div><div class="k">списано за весь разбор</div><div class="n">баланс 600 → 600</div></div>
+  <div class="tile ok"><div class="v">1,2 ₽</div><div class="k">списано за весь разбор</div><div class="n">баланс 600 → 598,8</div></div>
   <div class="tile"><div class="v">9</div><div class="k">эндпоинтов проверено</div><div class="n">7 REST + 2 MCP</div></div>
   <div class="tile"><div class="v">60+</div><div class="k">бесплатных замеров</div><div class="n">GET и /generate/estimate</div></div>
-  <div class="tile"><div class="v">1</div><div class="k">обращение к платному <code>POST /generate</code></div><div class="n">ответ 422, списания нет</div></div>
+  <div class="tile"><div class="v">2</div><div class="k">обращения к платному <code>POST /generate</code></div><div class="n">одно 422 без списания, одно 200</div></div>
 </div>
 
 <h2><span class="n">01</span>Как проверялось</h2>
@@ -238,6 +239,57 @@
   источник для клиентской валидации, чем <code>optional</code> из каталога.</p>
 </div>
 
+<div class="exp pass">
+  <div class="hd">
+    <span class="id">ПРОВЕРКА D</span>
+    <span class="ttl">Что происходит без флага</span>
+    <span class="verdict">✓ УТВЕРЖДЕНИЕ ПОДТВЕРДИЛОСЬ</span>
+  </div>
+
+  <blockquote>«Без <code>strict</code> запрос выполнится, но в ответе появится поле
+  <code>ignored_params</code> со списком отброшенных полей.»<br>
+  <small>— <code>/docs/agent-api</code>, ваша документация</small></blockquote>
+
+  <dl class="kv">
+    <dt>гипотеза</dt><dd>спишется 1,2 ₽, параметр молча отбросится, генерация выполнится</dd>
+    <dt>отличие от C</dt><dd>то же самое тело, убран только <code>strict</code></dd>
+    <dt>время</dt><dd>2026-07-28 17:12:36 UTC</dd>
+    <dt>попыток</dt><dd>одна, с <code>idempotency_key</code></dd>
+  </dl>
+
+  <h3>Получено</h3>
+<pre>HTTP 200
+
+{"status": "processing", "generation_id": 26001, "cost": 1.2,
+ "balance_after": 598.8,
+ "ignored_params": ["bogus_param"]}</pre>
+
+  <h3>Через ~36 секунд</h3>
+<pre>{"status": "complete", "generation_id": 26001, "cost": 1.2,
+ "refunded": false,
+ "display_url": "https://lk.vibemarketolog.ru/files/generation/26001?..."}</pre>
+
+  <h3>Баланс</h3>
+<pre>до    : 600 ₽      daily_spend_today: 0
+после : 598,8 ₽    daily_spend_today: 1,2
+дельта: −1,2 ₽</pre>
+</div>
+
+<h3>Что показала пара вместе</h3>
+<div class="scroll-x"><table>
+  <thead><tr><th>Проверка</th><th>Флаг</th><th class="num">HTTP</th><th>Что стало с параметром</th><th class="num">Списано</th></tr></thead>
+  <tbody>
+    <tr><td>C</td><td><code>strict: true</code></td><td class="num">422</td><td>отклонён, вызов не состоялся</td><td class="num free">0 ₽</td></tr>
+    <tr><td>D</td><td>флага нет</td><td class="num">200</td><td>молча отброшен, генерация выполнена</td><td class="num paid">1,2 ₽</td></tr>
+  </tbody>
+</table></div>
+
+<p class="sub" style="margin-top:16px">Оба ваших утверждения верны буквально.
+<code>strict</code> сохраняет деньги, его отсутствие их тратит, и разница
+определяется одним булевым полем — тем самым, которого нет в схеме
+MCP-инструментов. На дешёвой картинке цена вопроса 1,2 ₽; на видео-модели тот же
+механизм стоит от 36 до 316 ₽ за вызов.</p>
+
 <h2><span class="n">04</span>Что осталось непроверенным</h2>
 <p class="sub">Здесь список того, чего мы <em>не</em> знаем, с ценой ответа. Он
 короткий, и это тоже результат.</p>
@@ -245,9 +297,6 @@
 <div class="scroll-x"><table>
   <thead><tr><th>Вопрос</th><th>Чем проверяется</th><th class="num">Цена</th><th>Почему не сделано</th></tr></thead>
   <tbody>
-    <tr><td>Списывается ли за тело без <code>strict</code>, и попадает ли параметр в <code>ignored_params</code></td>
-        <td><code>z-image</code>, то же тело без флага</td><td class="num paid">1,2 ₽</td>
-        <td>готово к запуску, ждёт решения владельца</td></tr>
     <tr><td>Наглядные чеки: ловушка против правильной маршрутизации</td>
         <td><code>grok-ttv</code> и <code>grok-itv</code>, <code>duration: 5</code></td><td class="num paid">72 ₽</td>
         <td>механизм уже доказан проверкой C; чеки нужны только для наглядности</td></tr>
@@ -263,8 +312,8 @@
 <div class="caveat">
   <b>Почему мы не потратили больше.</b> Не из экономии. Каждый рубль здесь —
   чужие деньги, и тратить их имеет смысл только тогда, когда бесплатный путь
-  закрыт. Из семи находок бесплатно доказались все семь; восьмой вопрос стоил
-  1,2 ₽ в худшем случае и обошёлся в ноль. Компания, нанимающая человека
+  закрыт. Из семи находок бесплатно доказались все семь; восьмой вопрос закрыт парой
+  вызовов за 1,2 ₽ — стоимость одной картинки. Компания, нанимающая человека
   распоряжаться бюджетом клиентов круглосуточно, вправе посмотреть, как он
   обращается с 600 ₽.
 </div>
@@ -273,7 +322,7 @@
   <p>Все бесплатные замеры воспроизводятся ключом уровня <code>read</code> +
   <code>generate</code>. Команды — в <code>README.md</code> репозитория,
   полный журнал расходов — в <code>COSTS.md</code>.</p>
-  <p style="margin-top:12px">Баланс на момент публикации: <b>600 ₽ из 600</b>.</p>
+  <p style="margin-top:12px">Баланс на момент публикации: <b>598,8 ₽ из 600</b>.</p>
 </footer>
 
 </div>
