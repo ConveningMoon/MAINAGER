@@ -37,13 +37,17 @@ CREATE TABLE IF NOT EXISTS mainager_audit (
 );
 """
 
-VECTOR_SCHEMA = """
-CREATE EXTENSION IF NOT EXISTS vector;
+# A column type modifier cannot be a bound parameter — `vector(%s)` is a syntax
+# error, not a substitution — so the dimension is formatted into the statement.
+# It is cast through int() first, which is what makes that safe.
+VECTOR_EXTENSION = "CREATE EXTENSION IF NOT EXISTS vector"
+
+VECTOR_TABLE = """
 CREATE TABLE IF NOT EXISTS mainager_generations (
     key       TEXT PRIMARY KEY,
-    embedding vector(%(dimensions)s) NOT NULL,
-    payload   JSONB NOT NULL DEFAULT '{}'::jsonb
-);
+    embedding vector({dimensions}) NOT NULL,
+    payload   JSONB NOT NULL DEFAULT '{{}}'::jsonb
+)
 """
 
 _VECTOR_INDEX = """
@@ -136,8 +140,10 @@ class PgVectorIndex:
         self._dimensions = dimensions
 
     async def create_schema(self) -> None:
+        table = VECTOR_TABLE.format(dimensions=int(self._dimensions))
         async with self._connection.cursor() as cursor:
-            await cursor.execute(VECTOR_SCHEMA, {"dimensions": self._dimensions})
+            await cursor.execute(VECTOR_EXTENSION)
+            await cursor.execute(table)
             await cursor.execute(_VECTOR_INDEX)
         await self._connection.commit()
 

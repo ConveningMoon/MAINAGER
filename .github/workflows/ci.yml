@@ -67,8 +67,15 @@ jobs:
       - name: Type check
         run: mypy
 
+      # Failures are echoed back as workflow annotations so the reason is visible
+      # without pulling the full log, which needs a token.
       - name: Test
-        run: pytest
+        run: |
+          set -o pipefail
+          pytest -q --tb=short 2>&1 | tee pytest.txt || {
+            echo "::error title=pytest failed::$(tail -c 3000 pytest.txt | tr '\n' ' ' | tr -s ' ')"
+            exit 1
+          }
 
       # The backend tests skip themselves when Redis or Postgres are unreachable,
       # which would let a broken adapter pass CI silently.
