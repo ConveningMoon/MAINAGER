@@ -37,7 +37,7 @@
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px}
-  header{padding:56px 0 8px; border-bottom:1px solid var(--hair); margin-bottom:36px}
+  header{padding:14px 0 8px; border-bottom:1px solid var(--hair); margin-bottom:36px}
   h1{font-size:clamp(28px,4.4vw,44px); line-height:1.15; margin:0 0 14px; letter-spacing:-.02em}
   .lede{font-size:clamp(17px,2vw,20px); color:var(--ink-2); max-width:68ch; margin:0 0 22px}
   .stamp{font:13px/1.5 var(--mono); color:var(--muted); padding-bottom:28px}
@@ -121,6 +121,14 @@
   .built.yes{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good)}
   .built.no{background:color-mix(in srgb, var(--muted) 18%, transparent); color:var(--muted)}
 
+  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--hair); margin:0 0 8px; padding-top:26px;
+        overflow-x:auto}
+  .tabs a{flex:none; text-decoration:none; color:var(--ink-2); font-size:15px; font-weight:500;
+          padding:11px 16px; border-radius:8px 8px 0 0; border:1px solid transparent;
+          border-bottom:none; position:relative; top:1px; white-space:nowrap}
+  .tabs a:hover{color:var(--ink); background:var(--surface)}
+  .tabs a[aria-current="page"]{color:var(--ink); background:var(--surface);
+          border-color:var(--hair); font-weight:600}
   footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--hair);
          color:var(--muted); font-size:13.5px}
   .toggle{position:fixed; top:14px; right:14px; z-index:9; background:var(--surface);
@@ -132,6 +140,11 @@
 <body>
 <button class="toggle" id="themeToggle" type="button">тема</button>
 <div class="wrap">
+
+<nav class="tabs">
+  <a href="./" aria-current="page">Находки</a>
+  <a href="./tests.html">Проведённые проверки</a>
+</nav>
 
 <header>
   <h1>Где ваш Agent API теряет деньги клиента</h1>
