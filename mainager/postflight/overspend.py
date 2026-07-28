@@ -6,9 +6,9 @@ spent, how much was avoidable?
 
 Two honesty constraints are built in rather than papered over.
 
-First, a history record does not always carry the parameters the generation was
-made with, and for some models the price depends on them — duration for the grok
-tiers, prompt length for the per-1000-character voices. Where the request cannot
+First, a history record does not always carry the parameters the generation used,
+and for some models the price depends on them — duration for the grok tiers,
+prompt length for the per-1000-character voices. Where the request cannot
 be reconstructed the entry is reported as unanalysable and excluded from the
 total. It is never guessed.
 
