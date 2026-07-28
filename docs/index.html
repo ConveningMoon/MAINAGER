@@ -72,6 +72,9 @@
 
   details{margin-top:10px; border-top:1px solid var(--hair); padding-top:10px}
   summary{cursor:pointer; font-size:13.5px; color:var(--ink-2)}
+  /* Wide content scrolls inside its own box; the page body never scrolls sideways. */
+  .scroll-x{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  .scroll-x table{min-width:440px}
   table{border-collapse:collapse; width:100%; font-size:13.5px; margin-top:10px}
   th,td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--hair)}
   th{color:var(--muted); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em}
@@ -147,12 +150,12 @@
   <figcaption>Смета <code>POST /generate/estimate</code> для ролика 5 секунд.
   Разница определяется только тем, какой идентификатор указан в поле <code>model</code>.</figcaption>
   <details><summary>Таблица значений</summary>
-    <table><thead><tr><th>model</th><th class="num">duration</th><th class="num">цена</th></tr></thead>
+    <div class="scroll-x"><table><thead><tr><th>model</th><th class="num">duration</th><th class="num">цена</th></tr></thead>
     <tbody>
       <tr><td><code>grok-itv</code></td><td class="num">5</td><td class="num">36 ₽</td></tr>
       <tr><td><code>grok-itv-10</code></td><td class="num">5</td><td class="num">196 ₽</td></tr>
       <tr><td><code>grok-itv-20</code></td><td class="num">5</td><td class="num">316 ₽</td></tr>
-    </tbody></table>
+    </tbody></table></div>
   </details>
 </figure>
 
@@ -170,12 +173,12 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
   6 и 7 секундами: дальше выбор по каталогу становится дороже фактического минимума —
   на 15 секундах в <strong>2,6 раза</strong>.</figcaption>
   <details><summary>Таблица значений</summary>
-    <table><thead><tr><th>модель</th><th class="num">1 с</th><th class="num">5 с</th><th class="num">7 с</th><th class="num">10 с</th><th class="num">15 с</th></tr></thead>
+    <div class="scroll-x"><table><thead><tr><th>модель</th><th class="num">1 с</th><th class="num">5 с</th><th class="num">7 с</th><th class="num">10 с</th><th class="num">15 с</th></tr></thead>
     <tbody>
       <tr><td><code>grok-itv</code></td><td class="num">36</td><td class="num">36</td><td class="num">196</td><td class="num">196</td><td class="num">316</td></tr>
       <tr><td><code>veo3_fast</code></td><td class="num">—</td><td class="num">120</td><td class="num">—</td><td class="num">120</td><td class="num">120</td></tr>
       <tr><td><code>seedance-2-mini</code></td><td class="num">—</td><td class="num">70</td><td class="num">—</td><td class="num">140</td><td class="num">210</td></tr>
-    </tbody></table>
+    </tbody></table></div>
     <p><small>Прочерк — не замерялось. На графике такие точки не рисуются и не
     достраиваются: линия соединяет только измеренные значения.</small></p>
   </details>
@@ -195,12 +198,12 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
   <code>gemini-flash-tts</code> за 13 ₽ вместо <code>el-tts-turbo</code> за 6 ₽.
   Список переворачивает порядок — не на проценты, а вдвое.</figcaption>
   <details><summary>Таблица значений</summary>
-    <table><thead><tr><th>модель</th><th class="num">1000</th><th class="num">1001</th><th class="num">2500</th><th class="num">5001</th><th class="num">в /prices</th></tr></thead>
+    <div class="scroll-x"><table><thead><tr><th>модель</th><th class="num">1000</th><th class="num">1001</th><th class="num">2500</th><th class="num">5001</th><th class="num">в /prices</th></tr></thead>
     <tbody>
       <tr><td><code>el-tts-turbo</code></td><td class="num">6</td><td class="num">12</td><td class="num">18</td><td class="num">36</td><td class="num">29</td></tr>
       <tr><td><code>gemini-flash-tts</code></td><td class="num">13</td><td class="num">26</td><td class="num">39</td><td class="num">78</td><td class="num">13</td></tr>
       <tr><td><code>el-tts-multilingual-v2</code></td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td></tr>
-    </tbody></table>
+    </tbody></table></div>
     <p><small>К вечеру 28.07 <code>el-tts-turbo</code> и <code>el-tts-multilingual-v2</code>
     из <code>/prices</code> пропали совсем. Считаться при этом не перестали.</small></p>
   </details>
@@ -287,7 +290,7 @@ trap body → generate_content
 у аккаунта, на котором делался этот разбор, генераций нет вовсе.</p>
 
 <figure>
-  <table>
+  <div class="scroll-x"><table>
     <thead><tr><th>id</th><th>оплачено</th><th class="num">₽</th><th>дешевле сегодня</th><th class="num">₽</th><th class="num">разница</th></tr></thead>
     <tbody>
       <tr><td>syn_1</td><td><code>grok-itv-20</code></td><td class="num">316</td><td><code>grok-itv</code></td><td class="num">36</td><td class="num">280</td></tr>
@@ -298,7 +301,7 @@ trap body → generate_content
       <tr class="skip"><td>syn_6</td><td colspan="5">пропущено: модели <code>veo2-legacy</code> больше нет в каталоге</td></tr>
     </tbody>
     <tfoot><tr><th colspan="2">итого по проанализированным</th><th class="num">763,2</th><th></th><th class="num">109,2</th><th class="num">654</th></tr></tfoot>
-  </table>
+  </table></div>
   <figcaption>Записи, для которых нельзя восстановить исходные параметры, помечаются
   как непроанализированные и <strong>исключаются из итога</strong>, а не угадываются.
   Сравнение идёт с сегодняшними ценами — это действие, а не исторический аудит.</figcaption>
