@@ -7,147 +7,237 @@
 <style>
   :root{
     color-scheme: light;
-    --plane:#f9f9f7; --surface:#fcfcfb;
-    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-    --grid:#e1e0d9; --axis:#c3c2b7; --hair:rgba(11,11,11,.10);
+    --plane:#faf9f6; --surface:#ffffff; --sunk:#f2f1ec;
+    --ink:#12110f; --ink-2:#4a4843; --muted:#8a877e;
+    --grid:#e4e2da; --axis:#c9c6ba; --hair:rgba(18,17,15,.11);
     --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
     --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+    --accent:#eb6834;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --shadow: 0 1px 2px rgba(18,17,15,.05), 0 8px 24px -12px rgba(18,17,15,.14);
   }
   @media (prefers-color-scheme: dark){
     :root:where(:not([data-theme="light"])){
       color-scheme: dark;
-      --plane:#0d0d0d; --surface:#1a1a19;
-      --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
-      --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10);
+      --plane:#0c0c0b; --surface:#161615; --sunk:#111110;
+      --ink:#f7f6f2; --ink-2:#b8b5ab; --muted:#807d74;
+      --grid:#262624; --axis:#35342f; --hair:rgba(247,246,242,.12);
       --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+      --accent:#f07a45;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
     }
   }
   :root[data-theme="dark"]{
     color-scheme: dark;
-    --plane:#0d0d0d; --surface:#1a1a19;
-    --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10);
+    --plane:#0c0c0b; --surface:#161615; --sunk:#111110;
+    --ink:#f7f6f2; --ink-2:#b8b5ab; --muted:#807d74;
+    --grid:#262624; --axis:#35342f; --hair:rgba(247,246,242,.12);
     --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --accent:#f07a45;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.7);
   }
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:92px}
   body{
     margin:0; background:var(--plane); color:var(--ink);
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
-    -webkit-font-smoothing:antialiased;
+    font:16.5px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  .wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px}
-  header{padding:14px 0 8px; border-bottom:1px solid var(--hair); margin-bottom:36px}
-  h1{font-size:clamp(28px,4.4vw,44px); line-height:1.15; margin:0 0 14px; letter-spacing:-.02em}
-  .lede{font-size:clamp(17px,2vw,20px); color:var(--ink-2); max-width:68ch; margin:0 0 22px}
-  .stamp{font:13px/1.5 var(--mono); color:var(--muted); padding-bottom:28px}
-  .stamp b{color:var(--good); font-weight:600}
-  h2{font-size:clamp(21px,2.6vw,27px); margin:56px 0 6px; letter-spacing:-.01em}
-  h2 .n{color:var(--muted); font:600 15px/1 var(--mono); vertical-align:.35em; margin-right:10px}
-  h3{font-size:16px; margin:0 0 4px}
-  p{max-width:72ch}
-  .sub{color:var(--ink-2); margin:0 0 22px; max-width:72ch}
-  small{color:var(--muted); font-size:13px}
-  code{font:13.5px/1.5 var(--mono); background:var(--surface); border:1px solid var(--hair);
-       border-radius:4px; padding:1px 5px}
 
-  .tiles{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin:26px 0 8px}
-  .tile{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:18px 18px 16px}
-  .tile .v{font-size:clamp(30px,4vw,40px); font-weight:650; letter-spacing:-.02em; line-height:1.05}
-  .tile .k{color:var(--ink-2); font-size:14px; margin-top:6px}
-  .tile .n{color:var(--muted); font-size:12.5px; margin-top:8px; font-family:var(--mono)}
+  /* ── top chrome ─────────────────────────────────────────── */
+  .topbar{position:sticky; top:0; z-index:40; background:color-mix(in srgb,var(--plane) 88%,transparent);
+          backdrop-filter:saturate(1.6) blur(12px); border-bottom:1px solid var(--hair)}
+  .topbar .row{max-width:1120px; margin:0 auto; padding:0 24px; display:flex; align-items:center; gap:8px;
+               height:58px}
+  .brand{font:700 15px/1 var(--mono); letter-spacing:-.02em; color:var(--ink); text-decoration:none;
+         margin-right:6px; white-space:nowrap}
+  .brand i{color:var(--accent); font-style:normal}
+  .tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs a{flex:none; text-decoration:none; color:var(--ink-2); font-size:14px; font-weight:500;
+          padding:7px 13px; border-radius:99px; white-space:nowrap; transition:background .18s,color .18s}
+  .tabs a:hover{color:var(--ink); background:var(--sunk)}
+  .tabs a[aria-current="page"]{color:var(--plane); background:var(--ink); font-weight:600}
+  .spend{margin-left:auto; display:flex; align-items:center; gap:8px; font:12.5px/1 var(--mono);
+         color:var(--muted); white-space:nowrap}
+  .spend b{color:var(--good)}
+  .toggle{background:none; border:1px solid var(--hair); color:var(--ink-2); border-radius:99px;
+          padding:6px 12px; font:12.5px/1 system-ui,sans-serif; cursor:pointer; transition:.18s}
+  .toggle:hover{background:var(--sunk); color:var(--ink)}
+  .progress{position:absolute; left:0; bottom:-1px; height:2px; background:var(--accent); width:0}
+
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px 96px}
+
+  /* ── hero ───────────────────────────────────────────────── */
+  .hero{padding:76px 0 46px; border-bottom:1px solid var(--hair); margin-bottom:8px}
+  .kicker{font:600 12px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase;
+          color:var(--accent); margin-bottom:20px}
+  h1{font-size:clamp(34px,6.2vw,68px); line-height:1.02; margin:0 0 26px; letter-spacing:-.035em;
+     font-weight:680; max-width:16ch}
+  h1 em{font-style:normal; color:var(--accent)}
+  .lede{font-size:clamp(17px,2.1vw,21px); color:var(--ink-2); max-width:62ch; margin:0 0 26px;
+        line-height:1.55}
+  .stamp{font:12.5px/1.7 var(--mono); color:var(--muted)}
+  .stamp b{color:var(--good); font-weight:600}
+  .stamp a{color:inherit}
+
+  /* ── section rhythm ─────────────────────────────────────── */
+  section{padding:64px 0 0; scroll-margin-top:92px}
+  .shead{display:flex; align-items:baseline; gap:16px; margin-bottom:10px}
+  .shead .n{font:700 12px/1 var(--mono); color:var(--accent); letter-spacing:.1em; flex:none;
+            padding-top:6px}
+  h2{font-size:clamp(23px,3vw,34px); margin:0; letter-spacing:-.025em; font-weight:660; line-height:1.15}
+  h3{font-size:16.5px; margin:0 0 6px; font-weight:640}
+  p{max-width:70ch}
+  .sub{color:var(--ink-2); margin:0 0 26px; max-width:70ch; font-size:16.5px}
+  small{color:var(--muted); font-size:13px}
+  code{font:13.5px/1.5 var(--mono); background:var(--sunk); border-radius:5px; padding:2px 6px;
+       border:1px solid var(--hair)}
+
+  /* ── numbers ────────────────────────────────────────────── */
+  .tiles{display:grid; gap:1px; background:var(--hair); border:1px solid var(--hair);
+         border-radius:16px; overflow:hidden; grid-template-columns:repeat(auto-fit,minmax(212px,1fr));
+         margin:30px 0 10px}
+  .tile{background:var(--surface); padding:24px 22px 22px}
+  .tile .v{font-size:clamp(32px,4.4vw,46px); font-weight:700; letter-spacing:-.04em; line-height:1;
+           font-variant-numeric:tabular-nums}
+  .tile .k{color:var(--ink-2); font-size:14px; margin-top:10px; line-height:1.45}
+  .tile .n{color:var(--muted); font-size:12.5px; margin-top:10px; font-family:var(--mono)}
   .tile.bad .v{color:var(--crit)} .tile.ok .v{color:var(--good)}
 
-  figure{margin:0 0 12px; background:var(--surface); border:1px solid var(--hair);
-         border-radius:12px; padding:20px 18px 14px}
-  figcaption{font-size:14px; color:var(--ink-2); margin-top:10px}
-  .legend{display:flex; flex-wrap:wrap; gap:16px; margin:2px 0 14px; font-size:13.5px; color:var(--ink-2)}
-  .legend span{display:inline-flex; align-items:center; gap:7px}
-  .sw{width:11px; height:11px; border-radius:3px; flex:none}
+  /* ── figures ────────────────────────────────────────────── */
+  figure{margin:0 0 14px; background:var(--surface); border:1px solid var(--hair);
+         border-radius:16px; padding:24px 22px 16px; box-shadow:var(--shadow)}
+  figcaption{font-size:14.5px; color:var(--ink-2); margin-top:14px; max-width:74ch}
+  .legend{display:flex; flex-wrap:wrap; gap:18px; margin:0 0 18px; font-size:13.5px; color:var(--ink-2)}
+  .legend span{display:inline-flex; align-items:center; gap:8px}
+  .sw{width:10px; height:10px; border-radius:3px; flex:none}
   .chart{position:relative; width:100%; overflow-x:auto}
   svg{display:block; width:100%; height:auto}
-  .tip{position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
-       background:var(--ink); color:var(--plane); font:12.5px/1.45 var(--mono);
-       padding:7px 9px; border-radius:6px; white-space:pre; z-index:5; transform:translate(-50%,-115%)}
+  .tip{position:absolute; pointer-events:none; opacity:0; transition:opacity .12s;
+       background:var(--ink); color:var(--plane); font:12.5px/1.5 var(--mono);
+       padding:8px 10px; border-radius:8px; white-space:pre; z-index:5;
+       transform:translate(-50%,-118%); box-shadow:var(--shadow)}
 
-  details{margin-top:10px; border-top:1px solid var(--hair); padding-top:10px}
-  summary{cursor:pointer; font-size:13.5px; color:var(--ink-2)}
-  /* Wide content scrolls inside its own box; the page body never scrolls sideways. */
+  details{margin-top:12px; border-top:1px solid var(--hair); padding-top:12px}
+  summary{cursor:pointer; font-size:13.5px; color:var(--ink-2); list-style:none; display:flex;
+          align-items:center; gap:7px; user-select:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"›"; font:600 17px/1 var(--mono); color:var(--accent);
+                  transition:transform .2s; display:inline-block}
+  details[open] summary::before{transform:rotate(90deg)}
   .scroll-x{overflow-x:auto; -webkit-overflow-scrolling:touch}
   .scroll-x table{min-width:440px}
-  table{border-collapse:collapse; width:100%; font-size:13.5px; margin-top:10px}
-  th,td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--hair)}
-  th{color:var(--muted); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; margin-top:12px}
+  th,td{text-align:left; padding:9px 11px; border-bottom:1px solid var(--hair); vertical-align:top}
+  thead th{color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase;
+           letter-spacing:.07em; border-bottom-color:var(--axis)}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:var(--sunk)}
   td.num,th.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
   tr.skip td{color:var(--muted)}
+  tfoot th{font-size:13px; border-top:1px solid var(--axis)}
 
-  .cards{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:20px}
-  .card{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:18px}
-  .card .tag{font:600 11.5px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase;
-             color:var(--muted); display:block; margin-bottom:9px}
+  .cards{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(268px,1fr)); margin-top:22px}
+  .card{background:var(--surface); border:1px solid var(--hair); border-radius:14px; padding:20px;
+        transition:transform .2s, box-shadow .2s}
+  .card:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
+  .card .tag{font:600 11px/1 var(--mono); letter-spacing:.09em; text-transform:uppercase;
+             color:var(--muted); display:block; margin-bottom:11px}
   .card p{font-size:14.5px; color:var(--ink-2); margin:0}
-  .card .hit{color:var(--crit); font-weight:600}
+  .card .hit{color:var(--crit); font-weight:640}
 
-  pre{background:var(--surface); border:1px solid var(--hair); border-radius:10px;
-      padding:14px 16px; overflow-x:auto; font:13px/1.55 var(--mono); margin:16px 0}
-  blockquote{margin:18px 0; padding:2px 0 2px 16px; border-left:3px solid var(--axis);
-             color:var(--ink-2); font-size:15px}
+  pre{background:var(--sunk); border:1px solid var(--hair); border-radius:12px;
+      padding:16px 18px; overflow-x:auto; font:12.8px/1.6 var(--mono); margin:18px 0}
+  blockquote{margin:22px 0; padding:4px 0 4px 22px; border-left:2px solid var(--accent);
+             color:var(--ink); font:italic 19px/1.5 var(--serif); max-width:60ch}
+  blockquote small{display:block; margin-top:9px; font:13px/1.5 var(--mono); color:var(--muted);
+                   font-style:normal}
 
-  .fix{background:var(--surface); border:1px solid var(--hair); border-left:3px solid var(--good);
-       border-radius:10px; padding:16px 18px; margin:18px 0}
-  .fix h3{font-size:14.5px; color:var(--good); margin:0 0 10px;
-          font-family:var(--mono); text-transform:uppercase; letter-spacing:.05em}
-  .fix ol{margin:0; padding-left:20px; font-size:14.5px; color:var(--ink-2)}
-  .fix ol li{margin:6px 0}
-  .fix ol li b{color:var(--ink); font-weight:600}
-  .effort{display:inline-block; font:600 11.5px/1 var(--mono); padding:3px 8px; border-radius:5px;
-          background:color-mix(in srgb, var(--good) 14%, transparent); color:var(--good); margin-left:8px}
+  /* ── remediation ────────────────────────────────────────── */
+  .fix{background:var(--surface); border:1px solid var(--hair); border-radius:14px;
+       padding:20px 22px; margin:16px 0; position:relative; overflow:hidden}
+  .fix::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--good)}
+  .fix h3{font-size:13.5px; color:var(--good); margin:0 0 12px;
+          font-family:var(--mono); text-transform:uppercase; letter-spacing:.07em; font-weight:700}
+  .fix ol{margin:0; padding-left:22px; font-size:14.5px; color:var(--ink-2)}
+  .fix ol li{margin:8px 0}
+  .fix ol li b{color:var(--ink); font-weight:640}
+  .effort{display:inline-block; font:700 11px/1 var(--mono); padding:4px 9px; border-radius:99px;
+          background:color-mix(in srgb,var(--good) 15%,transparent); color:var(--good); margin-left:8px}
   .promptbox{position:relative}
-  .promptbox pre{white-space:pre-wrap; word-break:break-word}
-  .copy{position:absolute; top:24px; right:12px; background:var(--plane); color:var(--ink-2);
-        border:1px solid var(--hair); border-radius:6px; padding:5px 10px;
-        font:12px/1 system-ui,sans-serif; cursor:pointer}
-  .caveat{border-left:3px solid var(--warn); background:var(--surface); border-radius:8px;
-          padding:14px 16px; margin:20px 0; font-size:14.5px; color:var(--ink-2)}
+  .promptbox pre{white-space:pre-wrap; word-break:break-word; padding-top:44px}
+  .copy{position:absolute; top:30px; right:14px; background:var(--surface); color:var(--ink-2);
+        border:1px solid var(--hair); border-radius:99px; padding:6px 13px;
+        font:12px/1 system-ui,sans-serif; cursor:pointer; transition:.18s}
+  .copy:hover{color:var(--ink); border-color:var(--axis)}
+  .caveat{border-left:2px solid var(--warn); background:var(--surface); border-radius:0 12px 12px 0;
+          padding:16px 20px; margin:24px 0; font-size:14.5px; color:var(--ink-2); max-width:74ch}
+  .caveat b{color:var(--ink)}
 
-  .planes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:20px}
-  .plane{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:16px}
-  .plane .h{display:flex; align-items:center; gap:9px; margin-bottom:8px}
-  .plane .num{width:22px; height:22px; border-radius:6px; flex:none; display:grid; place-items:center;
-              font:600 12px/1 var(--mono); color:#fff}
-  .plane ul{margin:0; padding-left:17px; font-size:13.5px; color:var(--ink-2)}
-  .plane li{margin:3px 0}
-  .built{font:600 11px/1 var(--mono); padding:3px 7px; border-radius:5px; margin-left:auto}
-  .built.yes{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good)}
-  .built.no{background:color-mix(in srgb, var(--muted) 18%, transparent); color:var(--muted)}
+  /* ── planes ─────────────────────────────────────────────── */
+  .planes{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(238px,1fr)); margin-top:24px}
+  .plane{background:var(--surface); border:1px solid var(--hair); border-radius:14px; padding:18px}
+  .plane .h{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .plane .num{width:24px; height:24px; border-radius:8px; flex:none; display:grid; place-items:center;
+              font:700 12px/1 var(--mono); color:#fff}
+  .plane ul{margin:0; padding-left:18px; font-size:13.5px; color:var(--ink-2)}
+  .plane li{margin:4px 0}
+  .built{font:700 10.5px/1 var(--mono); padding:4px 8px; border-radius:99px; margin-left:auto;
+         letter-spacing:.04em}
+  .built.yes{background:color-mix(in srgb,var(--good) 16%,transparent); color:var(--good)}
+  .built.no{background:color-mix(in srgb,var(--muted) 20%,transparent); color:var(--muted)}
 
-  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--hair); margin:0 0 8px; padding-top:26px;
-        overflow-x:auto}
-  .tabs a{flex:none; text-decoration:none; color:var(--ink-2); font-size:15px; font-weight:500;
-          padding:11px 16px; border-radius:8px 8px 0 0; border:1px solid transparent;
-          border-bottom:none; position:relative; top:1px; white-space:nowrap}
-  .tabs a:hover{color:var(--ink); background:var(--surface)}
-  .tabs a[aria-current="page"]{color:var(--ink); background:var(--surface);
-          border-color:var(--hair); font-weight:600}
-  footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--hair);
+  /* ── process timeline ───────────────────────────────────── */
+  .steps{margin:28px 0 0; padding:0; list-style:none; position:relative}
+  .steps::before{content:""; position:absolute; left:15px; top:10px; bottom:10px; width:1px;
+                 background:var(--hair)}
+  .steps li{position:relative; padding:0 0 26px 48px}
+  .steps li::before{content:attr(data-n); position:absolute; left:0; top:-2px; width:31px; height:31px;
+                    border-radius:50%; background:var(--surface); border:1px solid var(--axis);
+                    display:grid; place-items:center; font:700 12px/1 var(--mono); color:var(--ink-2)}
+  .steps li.key::before{background:var(--accent); border-color:var(--accent); color:#fff}
+  .steps h3{margin:4px 0 6px}
+  .steps p{margin:0; color:var(--ink-2); font-size:15px; max-width:66ch}
+  .tool{display:inline-block; font:600 11.5px/1 var(--mono); padding:3px 8px; border-radius:99px;
+        background:var(--sunk); border:1px solid var(--hair); color:var(--muted); margin:8px 6px 0 0}
+
+  footer{margin-top:88px; padding-top:28px; border-top:1px solid var(--hair);
          color:var(--muted); font-size:13.5px}
-  .toggle{position:fixed; top:14px; right:14px; z-index:9; background:var(--surface);
-          color:var(--ink-2); border:1px solid var(--hair); border-radius:8px;
-          padding:7px 11px; font:13px/1 system-ui,sans-serif; cursor:pointer}
-  @media print{ .toggle{display:none} details{display:block} details>*{display:revert} }
+  footer a{color:var(--ink-2)}
+
+  /* ── motion ─────────────────────────────────────────────── */
+  .rise{opacity:0; transform:translateY(18px);
+        transition:opacity .62s cubic-bezier(.22,.61,.36,1), transform .62s cubic-bezier(.22,.61,.36,1)}
+  .rise.in{opacity:1; transform:none}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    .rise{opacity:1; transform:none; transition:none}
+    .card:hover{transform:none}
+    *{animation-duration:.01ms !important; transition-duration:.01ms !important}
+  }
+  @media print{ .topbar{position:static} .rise{opacity:1; transform:none} details{display:block} }
 </style>
 </head>
 <body>
-<button class="toggle" id="themeToggle" type="button">тема</button>
+<div class="topbar">
+  <div class="row">
+    <a class="brand" href="./">MAIN<i>A</i>GER</a>
+    <nav class="tabs">
+      <a href="./" aria-current="page">Находки</a>
+      <a href="./tests.html">Проверки</a>
+    </nav>
+    <span class="spend">1,2 ₽ из 600 · <b>598,8 ₽</b></span>
+    <button class="toggle" id="themeToggle" type="button">тема</button>
+  </div>
+  <div class="progress" id="progress"></div>
+</div>
 <div class="wrap">
 
-<nav class="tabs">
-  <a href="./" aria-current="page">Находки</a>
-  <a href="./tests.html">Проведённые проверки</a>
-</nav>
-
-<header>
-  <h1>Где ваш Agent API теряет деньги клиента</h1>
+<header class="hero">
+  <p class="kicker">внешний аудит · 28.07.2026 · потрачено 1,2 ₽</p>
+  <h1>Где ваш Agent API <em>теряет деньги</em> клиента</h1>
   <p class="lede">Разбор <code>lk.vibemarketolog.ru/api/agent</code> и MCP-коннектора:
   семь мест, где документация, каталог и прайс расходятся с тем, что реально
   списывается. Все цифры получены замерами, а не чтением.</p>
@@ -161,7 +251,7 @@
 вопрос, который иначе не проверить — он разобран во вкладке
 <a href="./tests.html">«Проведённые проверки»</a>. Баланс: 600 ₽ до, 598,8 ₽ после.</p>
 
-<div class="tiles">
+<div class="tiles rise">
   <div class="tile bad"><div class="v">8,8×</div><div class="k">разброс цены за один и тот же 5-секундный ролик</div><div class="n">36 ₽ против 316 ₽</div></div>
   <div class="tile bad"><div class="v">196 ₽</div><div class="k">за вызов, который смета помечает как <code>valid: true</code> и всё равно ломает</div><div class="n">rejected: [image_input]</div></div>
   <div class="tile bad"><div class="v">0 из 9</div><div class="k">MCP-инструментов, где виден флаг <code>strict</code></div><div class="n">ни в схеме, ни в instructions</div></div>
@@ -169,14 +259,90 @@
 </div>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">01</span>Один и тот же ролик — три цены</h2>
+<section id="s00" class="rise">
+  <div class="shead"><span class="n">00</span><h2>Как эти находки были найдены</h2></div>
+  <p class="sub">Ни одна из них не лежала на поверхности. Ниже — фактический порядок работы,
+  включая инструменты и включая места, где я ошибался. Второе важнее первого:
+  разница между анализом и генерацией текста в том, что анализ ловит собственные ошибки.</p>
+
+  <ol class="steps">
+    <li data-n="1">
+      <h3>Сначала — как обычный пользователь</h3>
+      <p>До всякой документации я просто пользовался платформой: регистрация, генерация,
+      личный кабинет. Понять продукт с той стороны, с которой его видит клиент, дешевле
+      и быстрее, чем реконструировать его по эндпоинтам.</p>
+    </li>
+    <li data-n="2">
+      <h3>Потом — документация целиком</h3>
+      <p><code>/docs/agent-api</code> и <code>/docs/agent-quickstart</code>, включая разделы,
+      до которых обычно не доходят: тарификацию входящих сообщений и мост Bitrix24.
+      Находка №8 — про 4 секунды и 10 ₽ — живёт именно там.</p>
+      <span class="tool">NotebookLM — навигация по документации</span>
+    </li>
+    <li data-n="3">
+      <h3>Ручная проверка каждого утверждения</h3>
+      <p>Всё, что документация обещает, я проверял запросами по отдельности — сначала
+      вручную, потом скриптами. Правило было одно: <b>сначала бесплатные эндпоинты</b>.
+      Оказалось, что <code>/generate/estimate</code> отвечает почти на все вопросы и
+      ничего не списывает.</p>
+      <span class="tool">Postman — ручные запросы</span>
+      <span class="tool">только бесплатные эндпоинты</span>
+    </li>
+    <li data-n="4" class="key">
+      <h3>Сверка источников друг с другом</h3>
+      <p>Отдельные ответы выглядят нормально. Расхождения видно только когда кладёшь два
+      источника рядом: каталог против прайса, схема MCP против REST, поле <code>price</code>
+      против сметы. Так нашлись находки 3–6. Это же превратилось в команду
+      <code>mainager drift</code> — потому что расхождение оказалось не разовым, а живым.</p>
+    </li>
+    <li data-n="5">
+      <h3>Разбор рисков и план</h3>
+      <p>Список наблюдений я разобрал на гипотезы, отсортировал по денежному эффекту и
+      нарисовал в BPMN, чтобы видеть зависимости между проверками и порядок действий.
+      Схема нужна была мне, а не заказчику: она показывает, какие проверки блокируют
+      какие.</p>
+      <span class="tool">Claude — поиск слабых мест, разбор гипотез</span>
+      <span class="tool">BPMN — планирование</span>
+    </li>
+    <li data-n="6" class="key">
+      <h3>Где я ошибся — и как это выяснилось</h3>
+      <p>Четыре раза. Записал, что <code>seedream-5-pro</code> невозможно оценить — смета
+      оценила его нормально. Написал, что <code>duration</code> не влияет на цену — верно
+      только для закреплённого тарифа, на базовом идентификаторе он и выбирает тариф, и
+      это оказалось находкой сильнее исходной. Опубликовал график с интерполированными
+      точками — заметил при вычитке рендера и заменил на разрывы. И собственный CI поймал
+      SQL, который не мог работать никогда: параметр в DDL там, где параметры не
+      подставляются.</p>
+    </li>
+    <li data-n="7">
+      <h3>Реализация и платная проверка в конце</h3>
+      <p>Код писался после того, как находки были доказаны, а не вместо этого. Деньги
+      тратились в самом конце и только на то, что бесплатно не проверяется: одна пара
+      вызовов, 1,2 ₽ из 600.</p>
+      <span class="tool">Claude Code — реализация</span>
+      <span class="tool">CI с реальными Redis и pgvector</span>
+    </li>
+  </ol>
+
+  <div class="caveat" style="margin-top:8px">
+    <b>Про инструменты — прямо.</b> NotebookLM, Postman, BPMN и кодовые агенты ускоряют
+    чтение, черновики и набор кода. Они не решают, какой вопрос задать, какой ответ
+    считать подозрительным и на что не стоит тратить чужие деньги. Каждая цифра здесь —
+    это отдельный запрос к вашему API и сверка результата с тем, что обещано; каждая из
+    четырёх ошибок выше найдена перепроверкой, а не подсказкой. Инструменты держали
+    темп, решения принимал я.
+  </div>
+</section>
+
+<section id="s01" class="rise">
+  <div class="shead"><span class="n">01</span><h2>Один и тот же ролик — три цены</h2></div>
 <p class="sub">В <code>getting_started.image_to_video</code> вы показываете агенту форму
 с закреплённым тарифом: <code>grok-itv-10|20|30</code>. При закреплённом тарифе параметр
 <code>duration</code> принимается, попадает в <code>valid_params</code>, не попадает
 в <code>rejected</code> — и не влияет ни на что. На базовом идентификаторе
 он же выбирает минимально достаточный тариф.</p>
 
-<figure>
+<figure class="rise">
   <div class="legend" id="lg-bar"></div>
   <div class="chart"><div id="c-bar"></div><div class="tip" id="t-bar"></div></div>
   <figcaption>Смета <code>POST /generate/estimate</code> для ролика 5 секунд.
@@ -192,13 +358,16 @@
 </figure>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">02</span>Самая дешёвая модель зависит от длительности</h2>
+</section>
+
+<section id="s02" class="rise">
+  <div class="shead"><span class="n">02</span><h2>Самая дешёвая модель зависит от длительности</h2></div>
 <p class="sub">Поле <code>price</code> в каталоге — это цена при дефолтных параметрах,
 а не цена вызова. Если ранжировать модели по нему, <code>grok-itv</code> (36) всегда
 выглядит дешевле <code>veo3_fast</code> (120). На пятнадцати секундах это неверно:
 grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 
-<figure>
+<figure class="rise">
   <div class="legend" id="lg-line"></div>
   <div class="chart"><div id="c-line"></div><div class="tip" id="t-line"></div></div>
   <figcaption>Цена по смете в зависимости от <code>duration</code>. Точка пересечения между
@@ -217,7 +386,10 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 </figure>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">03</span>Цифры в <code>/prices</code> в разных единицах</h2>
+</section>
+
+<section id="s03" class="rise">
+  <div class="shead"><span class="n">03</span><h2>Цифры в <code>/prices</code> в разных единицах</h2></div>
 <p class="sub">Это нашлось случайно, при сборке сметы сценария: озвучка встала в 6 ₽
 (утренний замер), хотя в прайсе у <code>el-tts-turbo</code> стоит 29. В одной колонке
 лежат три разные величины — цена за начатую тысячу символов, цена за вызов целиком,
@@ -225,7 +397,7 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 времени реальный тариф <code>el-tts-turbo</code> вырос с 6 до 8 ₽ за тысячу, а в
 прайсе остались всё те же 29.</p>
 
-<figure>
+<figure class="rise">
   <div class="legend" id="lg-tts"></div>
   <div class="chart"><div id="c-tts"></div><div class="tip" id="t-tts"></div></div>
   <figcaption>Агент, выбирающий самую дешёвую озвучку по <code>/prices</code>, возьмёт
@@ -245,19 +417,22 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 </figure>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">04</span>Два источника правды расходятся — и расхождение растёт</h2>
+</section>
+
+<section id="s04" class="rise">
+  <div class="shead"><span class="n">04</span><h2>Два источника правды расходятся — и расхождение растёт</h2></div>
 <p class="sub">Утром в категории <code>voice</code> прайса было пять моделей, вечером того же
 дня — две. Из каталога они никуда не делись и считаются как раньше. Это не статическая
 ошибка, которую можно один раз поправить: сверять нужно на старте каждого процесса.</p>
 
-<div class="tiles">
+<div class="tiles rise">
   <div class="tile bad"><div class="v">4</div><div class="k">модели генерируются, но цены в <code>/prices</code> нет</div><div class="n">за день было 5, потом 8, теперь 4</div></div>
   <div class="tile bad"><div class="v">7</div><div class="k">цен есть, а модели в каталоге нет</div><div class="n">включая grok-itv-30 за 436 ₽</div></div>
   <div class="tile"><div class="v">2</div><div class="k">модели лежат в разных категориях в каталоге и в прайсе</div><div class="n">gemini-omni-audio / -character</div></div>
   <div class="tile bad"><div class="v">+38%</div><div class="k">насколько занижен потолок расходов, собранный по каталогу</div><div class="n">316 ₽ против реальных 436 ₽</div></div>
 </div>
 
-<figure style="margin-top:20px">
+<figure class="rise" style="margin-top:20px">
   <div class="scroll-x"><table>
     <thead><tr><th>замер 28.07</th><th class="num">моделей в voice</th><th class="num">всего ключей</th><th class="num">скрытых</th><th class="num">без цены</th></tr></thead>
     <tbody>
@@ -277,7 +452,10 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 <code>models.video["grok-itv"].tiers</code> — только первые два. Пропущенный тариф самый дорогой.</p>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">05</span>Поле <code>valid</code> отвечает не на тот вопрос</h2>
+</section>
+
+<section id="s05" class="rise">
+  <div class="shead"><span class="n">05</span><h2>Поле <code>valid</code> отвечает не на тот вопрос</h2></div>
 
 <blockquote>«Самая частая ошибка агентов — слать <code>image_input</code> для видео.
 Видео-модели его не читают → вы получите чистый text-to-video, а деньги спишутся.»
@@ -301,7 +479,10 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 доступность — из <code>warnings</code> и <code>daily_spend.within_limit</code>.</p>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">06</span>В MCP-коннекторе флага <code>strict</code> не видно</h2>
+</section>
+
+<section id="s06" class="rise">
+  <div class="shead"><span class="n">06</span><h2>В MCP-коннекторе флага <code>strict</code> не видно</h2></div>
 <p class="sub">Из девяти инструментов два ведут к списанию. Ни один из двух не объявляет
 <code>strict</code> — ни в <code>inputSchema</code>, ни в описании, ни в поле
 <code>instructions</code> сервера, где расписан весь рекомендуемый сценарий. На странице
@@ -333,13 +514,16 @@ trap body → generate_content
   and still charge 196 RUB          <span style="color:var(--muted)">— наверх не ушло</span></pre>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">07</span>Сколько это стоит на истории аккаунта</h2>
+</section>
+
+<section id="s07" class="rise">
+  <div class="shead"><span class="n">07</span><h2>Сколько это стоит на истории аккаунта</h2></div>
 <p class="sub"><code>GET /generations</code> бесплатен и отдаёт модель и стоимость каждой
 прошлой генерации. Прогнав историю через маршрутизатор, можно посчитать, сколько было
 потрачено сверх минимума. Ниже — демонстрация на синтетической истории:
 у аккаунта, на котором делался этот разбор, генераций нет вовсе.</p>
 
-<figure>
+<figure class="rise">
   <div class="scroll-x"><table>
     <thead><tr><th>id</th><th>оплачено</th><th class="num">₽</th><th>дешевле сегодня</th><th class="num">₽</th><th class="num">разница</th></tr></thead>
     <tbody>
@@ -358,7 +542,10 @@ trap body → generate_content
 </figure>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">08</span>Как это чинится</h2>
+</section>
+
+<section id="s08" class="rise">
+  <div class="shead"><span class="n">08</span><h2>Как это чинится</h2></div>
 <p class="sub">Ниже — конкретные действия по каждой находке и готовый текст задачи,
 который можно отдать разработчику или кодовому агенту. Оценка трудоёмкости — моя,
 исходя из того, что видно снаружи.</p>
@@ -482,7 +669,10 @@ trap body → generate_content
    порядок, что сортировка по смете.</pre>
 </div>
 
-<h2><span class="n">09</span>Что из этого построено</h2>
+</section>
+
+<section id="s09" class="rise">
+  <div class="shead"><span class="n">09</span><h2>Что из этого построено</h2></div>
 <p class="sub">Контур управления между агентом и деньгами клиента. Проверки идут от самой
 дешёвой к самой дорогой; ни в одной из них не участвует языковая модель — всё детерминировано,
 потому что во входящем канале есть 4 секунды до того, как ответит автоответчик платформы.</p>
@@ -512,6 +702,8 @@ trap body → generate_content
     <li>обход платного автоответчика</li>
     <li>CRM-действия через белый список</li></ul></div>
 </div>
+
+</section>
 
 <footer>
   <p>Воспроизводится ключом уровня <code>read</code> + <code>generate</code>.
@@ -758,6 +950,38 @@ curl -X POST … -d '{"type":"video","model":"grok-itv","prompt":"…",
       }
     });
   }
+
+
+  /* ---- reveal on scroll, scroll progress, counters ---- */
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var risers = [].slice.call(document.querySelectorAll(".rise"));
+  if (reduce || !("IntersectionObserver" in window)){
+    risers.forEach(function(n){ n.classList.add("in"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, {rootMargin: "0px 0px -8% 0px", threshold: 0.06});
+    risers.forEach(function(n){ io.observe(n); });
+    // Failsafe: reveal everything regardless after a moment. Content that stays
+    // hidden because an observer never fired is worse than content that never
+    // animated — this page is evidence before it is a page.
+    window.setTimeout(function(){ risers.forEach(function(n){ n.classList.add("in"); }); }, 2500);
+  }
+
+  var bar = document.getElementById("progress");
+  var ticking = false;
+  function drawProgress(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + "%";
+    ticking = false;
+  }
+  window.addEventListener("scroll", function(){
+    if (!ticking){ ticking = true; window.requestAnimationFrame(drawProgress); }
+  }, {passive:true});
+  drawProgress();
 
   var btn = document.getElementById("themeToggle");
   btn.addEventListener("click", function(){
