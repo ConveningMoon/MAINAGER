@@ -23,6 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.2"]
+infra = ["redis>=5.0", "psycopg[binary]>=3.1"]
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.23",
@@ -30,6 +31,8 @@ dev = [
     "mypy>=1.10",
     "ruff>=0.5",
     "mcp>=1.2",
+    "redis>=5.0",
+    "psycopg[binary]>=3.1",
 ]
 
 [project.scripts]
