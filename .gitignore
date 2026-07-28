@@ -5,6 +5,7 @@
 !/README.md
 !/FINDINGS.md
 !/COSTS.md
+!/DESIGN.md
 
 # --- secrets ---
 .env
