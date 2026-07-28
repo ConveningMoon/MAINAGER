@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -13,12 +14,24 @@ from mainager.providers.vibemarketolog.capabilities import fetch_capabilities, w
 from mainager.providers.vibemarketolog.errors import VibeApiError
 
 
+def _summarise_models(payload: dict[str, Any]) -> str:
+    """One-line breakdown of the catalog, which is keyed by model type."""
+    models = payload.get("models")
+    if not isinstance(models, dict):
+        return "no model catalog in payload"
+    by_type = {
+        name: len(entries) for name, entries in models.items() if isinstance(entries, dict | list)
+    }
+    if not by_type:
+        return "no model catalog in payload"
+    breakdown = ", ".join(f"{name} {count}" for name, count in sorted(by_type.items()))
+    return f"{sum(by_type.values())} models ({breakdown})"
+
+
 async def _dump_capabilities(settings: Settings) -> int:
     payload = await fetch_capabilities(settings)
     destination = write_snapshot(payload, settings.data_dir)
-    models = payload.get("models")
-    count = len(models) if isinstance(models, list | dict) else "?"
-    print(f"wrote {destination} ({count} models)")
+    print(f"wrote {destination} — {_summarise_models(payload)}")
     return 0
 
 
