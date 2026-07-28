@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAINAGER — где Agent API теряет деньги</title>
+<style>
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --hair:rgba(11,11,11,.10);
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+    --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19;
+      --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10);
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19;
+    --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--plane); color:var(--ink);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 20px 80px}
+  header{padding:56px 0 8px; border-bottom:1px solid var(--hair); margin-bottom:36px}
+  h1{font-size:clamp(28px,4.4vw,44px); line-height:1.15; margin:0 0 14px; letter-spacing:-.02em}
+  .lede{font-size:clamp(17px,2vw,20px); color:var(--ink-2); max-width:68ch; margin:0 0 22px}
+  .stamp{font:13px/1.5 var(--mono); color:var(--muted); padding-bottom:28px}
+  .stamp b{color:var(--good); font-weight:600}
+  h2{font-size:clamp(21px,2.6vw,27px); margin:56px 0 6px; letter-spacing:-.01em}
+  h2 .n{color:var(--muted); font:600 15px/1 var(--mono); vertical-align:.35em; margin-right:10px}
+  h3{font-size:16px; margin:0 0 4px}
+  p{max-width:72ch}
+  .sub{color:var(--ink-2); margin:0 0 22px; max-width:72ch}
+  small{color:var(--muted); font-size:13px}
+  code{font:13.5px/1.5 var(--mono); background:var(--surface); border:1px solid var(--hair);
+       border-radius:4px; padding:1px 5px}
+
+  .tiles{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); margin:26px 0 8px}
+  .tile{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:18px 18px 16px}
+  .tile .v{font-size:clamp(30px,4vw,40px); font-weight:650; letter-spacing:-.02em; line-height:1.05}
+  .tile .k{color:var(--ink-2); font-size:14px; margin-top:6px}
+  .tile .n{color:var(--muted); font-size:12.5px; margin-top:8px; font-family:var(--mono)}
+  .tile.bad .v{color:var(--crit)} .tile.ok .v{color:var(--good)}
+
+  figure{margin:0 0 12px; background:var(--surface); border:1px solid var(--hair);
+         border-radius:12px; padding:20px 18px 14px}
+  figcaption{font-size:14px; color:var(--ink-2); margin-top:10px}
+  .legend{display:flex; flex-wrap:wrap; gap:16px; margin:2px 0 14px; font-size:13.5px; color:var(--ink-2)}
+  .legend span{display:inline-flex; align-items:center; gap:7px}
+  .sw{width:11px; height:11px; border-radius:3px; flex:none}
+  .chart{position:relative; width:100%; overflow-x:auto}
+  svg{display:block; width:100%; height:auto}
+  .tip{position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
+       background:var(--ink); color:var(--plane); font:12.5px/1.45 var(--mono);
+       padding:7px 9px; border-radius:6px; white-space:pre; z-index:5; transform:translate(-50%,-115%)}
+
+  details{margin-top:10px; border-top:1px solid var(--hair); padding-top:10px}
+  summary{cursor:pointer; font-size:13.5px; color:var(--ink-2)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; margin-top:10px}
+  th,td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--hair)}
+  th{color:var(--muted); font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em}
+  td.num,th.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  tr.skip td{color:var(--muted)}
+
+  .cards{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); margin-top:20px}
+  .card{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:18px}
+  .card .tag{font:600 11.5px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase;
+             color:var(--muted); display:block; margin-bottom:9px}
+  .card p{font-size:14.5px; color:var(--ink-2); margin:0}
+  .card .hit{color:var(--crit); font-weight:600}
+
+  pre{background:var(--surface); border:1px solid var(--hair); border-radius:10px;
+      padding:14px 16px; overflow-x:auto; font:13px/1.55 var(--mono); margin:16px 0}
+  blockquote{margin:18px 0; padding:2px 0 2px 16px; border-left:3px solid var(--axis);
+             color:var(--ink-2); font-size:15px}
+
+  .planes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:20px}
+  .plane{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:16px}
+  .plane .h{display:flex; align-items:center; gap:9px; margin-bottom:8px}
+  .plane .num{width:22px; height:22px; border-radius:6px; flex:none; display:grid; place-items:center;
+              font:600 12px/1 var(--mono); color:#fff}
+  .plane ul{margin:0; padding-left:17px; font-size:13.5px; color:var(--ink-2)}
+  .plane li{margin:3px 0}
+  .built{font:600 11px/1 var(--mono); padding:3px 7px; border-radius:5px; margin-left:auto}
+  .built.yes{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good)}
+  .built.no{background:color-mix(in srgb, var(--muted) 18%, transparent); color:var(--muted)}
+
+  footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--hair);
+         color:var(--muted); font-size:13.5px}
+  .toggle{position:fixed; top:14px; right:14px; z-index:9; background:var(--surface);
+          color:var(--ink-2); border:1px solid var(--hair); border-radius:8px;
+          padding:7px 11px; font:13px/1 system-ui,sans-serif; cursor:pointer}
+  @media print{ .toggle{display:none} details{display:block} details>*{display:revert} }
+</style>
+</head>
+<body>
+<button class="toggle" id="themeToggle" type="button">тема</button>
+<div class="wrap">
+
+<header>
+  <h1>Где ваш Agent API теряет деньги клиента</h1>
+  <p class="lede">Разбор <code>lk.vibemarketolog.ru/api/agent</code> и MCP-коннектора:
+  семь мест, где документация, каталог и прайс расходятся с тем, что реально
+  списывается. Все цифры получены замерами, а не чтением.</p>
+  <p class="stamp">28.07.2026 · api_version 1.0.0 · MCP 1.1.0 · ключ уровня read+generate ·
+  потрачено на весь аудит: <b>0 ₽ из 600</b></p>
+</header>
+
+<p class="sub">Ниже — только то, что удалось измерить. Каждый замер повторяется бесплатно:
+все они сделаны на <code>GET</code>-эндпоинтах и на <code>POST /generate/estimate</code>,
+который ничего не списывает. Баланс до аудита — 600 ₽, после — 600 ₽.</p>
+
+<div class="tiles">
+  <div class="tile bad"><div class="v">8,8×</div><div class="k">разброс цены за один и тот же 5-секундный ролик</div><div class="n">36 ₽ против 316 ₽</div></div>
+  <div class="tile bad"><div class="v">196 ₽</div><div class="k">за вызов, который смета помечает как <code>valid: true</code> и всё равно ломает</div><div class="n">rejected: [image_input]</div></div>
+  <div class="tile bad"><div class="v">0 из 9</div><div class="k">MCP-инструментов, где виден флаг <code>strict</code></div><div class="n">ни в схеме, ни в instructions</div></div>
+  <div class="tile"><div class="v">16</div><div class="k">идентификаторов, по которым каталог и прайс не сходятся</div><div class="n">8 + 6 + 2 категории</div></div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">01</span>Один и тот же ролик — три цены</h2>
+<p class="sub">В <code>getting_started.image_to_video</code> вы показываете агенту форму
+с закреплённым тарифом: <code>grok-itv-10|20|30</code>. При закреплённом тарифе параметр
+<code>duration</code> принимается, попадает в <code>valid_params</code>, не попадает
+в <code>rejected</code> — и не влияет ни на что. На базовом идентификаторе
+он же выбирает минимально достаточный тариф.</p>
+
+<figure>
+  <div class="legend" id="lg-bar"></div>
+  <div class="chart"><div id="c-bar"></div><div class="tip" id="t-bar"></div></div>
+  <figcaption>Смета <code>POST /generate/estimate</code> для ролика 5 секунд.
+  Разница определяется только тем, какой идентификатор указан в поле <code>model</code>.</figcaption>
+  <details><summary>Таблица значений</summary>
+    <table><thead><tr><th>model</th><th class="num">duration</th><th class="num">цена</th></tr></thead>
+    <tbody>
+      <tr><td><code>grok-itv</code></td><td class="num">5</td><td class="num">36 ₽</td></tr>
+      <tr><td><code>grok-itv-10</code></td><td class="num">5</td><td class="num">196 ₽</td></tr>
+      <tr><td><code>grok-itv-20</code></td><td class="num">5</td><td class="num">316 ₽</td></tr>
+    </tbody></table>
+  </details>
+</figure>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">02</span>Самая дешёвая модель зависит от длительности</h2>
+<p class="sub">Поле <code>price</code> в каталоге — это цена при дефолтных параметрах,
+а не цена вызова. Если ранжировать модели по нему, <code>grok-itv</code> (36) всегда
+выглядит дешевле <code>veo3_fast</code> (120). На пятнадцати секундах это неверно:
+grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
+
+<figure>
+  <div class="legend" id="lg-line"></div>
+  <div class="chart"><div id="c-line"></div><div class="tip" id="t-line"></div></div>
+  <figcaption>Цена по смете в зависимости от <code>duration</code>. Точка пересечения между
+  6 и 7 секундами: дальше выбор по каталогу становится дороже фактического минимума —
+  на 15 секундах в <strong>2,6 раза</strong>.</figcaption>
+  <details><summary>Таблица значений</summary>
+    <table><thead><tr><th>модель</th><th class="num">1 с</th><th class="num">5 с</th><th class="num">7 с</th><th class="num">10 с</th><th class="num">15 с</th></tr></thead>
+    <tbody>
+      <tr><td><code>grok-itv</code></td><td class="num">36</td><td class="num">36</td><td class="num">196</td><td class="num">196</td><td class="num">316</td></tr>
+      <tr><td><code>veo3_fast</code></td><td class="num">—</td><td class="num">120</td><td class="num">—</td><td class="num">120</td><td class="num">120</td></tr>
+      <tr><td><code>seedance-2-mini</code></td><td class="num">—</td><td class="num">70</td><td class="num">—</td><td class="num">140</td><td class="num">210</td></tr>
+    </tbody></table>
+    <p><small>Прочерк — не замерялось. На графике такие точки не рисуются и не
+    достраиваются: линия соединяет только измеренные значения.</small></p>
+  </details>
+</figure>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">03</span>Цифры в <code>/prices</code> в разных единицах</h2>
+<p class="sub">Это нашлось случайно, при сборке сметы сценария: озвучка встала в 6 ₽,
+хотя в прайсе у <code>el-tts-turbo</code> стоит 29. Оказалось, в одной колонке лежат
+три разные величины — цена за начатую тысячу символов, цена за вызов целиком,
+и число, которого не видно ни на одной длине.</p>
+
+<figure>
+  <div class="legend" id="lg-tts"></div>
+  <div class="chart"><div id="c-tts"></div><div class="tip" id="t-tts"></div></div>
+  <figcaption>Агент, выбирающий самую дешёвую озвучку по <code>/prices</code>, возьмёт
+  <code>gemini-flash-tts</code> за 13 ₽ вместо <code>el-tts-turbo</code> за 6 ₽.
+  Список переворачивает порядок — не на проценты, а вдвое.</figcaption>
+  <details><summary>Таблица значений</summary>
+    <table><thead><tr><th>модель</th><th class="num">1000</th><th class="num">1001</th><th class="num">2500</th><th class="num">5001</th><th class="num">в /prices</th></tr></thead>
+    <tbody>
+      <tr><td><code>el-tts-turbo</code></td><td class="num">6</td><td class="num">12</td><td class="num">18</td><td class="num">36</td><td class="num">29</td></tr>
+      <tr><td><code>gemini-flash-tts</code></td><td class="num">13</td><td class="num">26</td><td class="num">39</td><td class="num">78</td><td class="num">13</td></tr>
+      <tr><td><code>el-tts-multilingual-v2</code></td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td></tr>
+    </tbody></table>
+    <p><small>К вечеру 28.07 <code>el-tts-turbo</code> и <code>el-tts-multilingual-v2</code>
+    из <code>/prices</code> пропали совсем. Считаться при этом не перестали.</small></p>
+  </details>
+</figure>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">04</span>Два источника правды расходятся — и расхождение растёт</h2>
+<p class="sub">Утром в категории <code>voice</code> прайса было пять моделей, вечером того же
+дня — две. Из каталога они никуда не делись и считаются как раньше. Это не статическая
+ошибка, которую можно один раз поправить: сверять нужно на старте каждого процесса.</p>
+
+<div class="tiles">
+  <div class="tile bad"><div class="v">8</div><div class="k">моделей генерируются, но цены в <code>/prices</code> нет</div><div class="n">утром было 5</div></div>
+  <div class="tile bad"><div class="v">6</div><div class="k">цен есть, а модели в каталоге нет</div><div class="n">включая grok-itv-30 за 436 ₽</div></div>
+  <div class="tile"><div class="v">2</div><div class="k">модели лежат в разных категориях в каталоге и в прайсе</div><div class="n">gemini-omni-audio / -character</div></div>
+  <div class="tile bad"><div class="v">+38%</div><div class="k">насколько занижен потолок расходов, собранный по каталогу</div><div class="n">316 ₽ против реальных 436 ₽</div></div>
+</div>
+
+<p class="sub" style="margin-top:22px">Каталог внутри себя тоже не сходится:
+<code>getting_started</code> перечисляет <code>grok-itv-10|20|30</code>, а
+<code>models.video["grok-itv"].tiers</code> — только первые два. Пропущенный тариф самый дорогой.</p>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">05</span>Поле <code>valid</code> отвечает не на тот вопрос</h2>
+
+<blockquote>«Самая частая ошибка агентов — слать <code>image_input</code> для видео.
+Видео-модели его не читают → вы получите чистый text-to-video, а деньги спишутся.»
+<br><small>— ваша документация, /docs/agent-api</small></blockquote>
+
+<p class="sub">Средство защиты у вас есть и оно работает. Но по умолчанию оно выключено,
+а поле, по которому агент принимает решение, в этот момент говорит «годен»:</p>
+
+<pre>POST /generate/estimate   (без strict)
+
+{ "valid": <span style="color:var(--crit)">true</span>,
+  "estimated_cost_rub": 196,
+  "rejected": [<span style="color:var(--crit)">"image_input"</span>],
+  "warnings": ["image_input is for type=image only…"] }</pre>
+
+<p class="sub">И в обратную сторону: корректно составленное тело получает
+<code>valid: false</code>, если денег не хватает —
+<code>"insufficient_balance: need 1188₽, have 600₽"</code>. Одно булево поле смешивает
+«тело правильное» и «хватает денег», поэтому не отвечает ни на один из двух вопросов.
+У себя мы его не используем: чистоту тела берём из <code>rejected</code>,
+доступность — из <code>warnings</code> и <code>daily_spend.within_limit</code>.</p>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">06</span>В MCP-коннекторе флага <code>strict</code> не видно</h2>
+<p class="sub">Из девяти инструментов два ведут к списанию. Ни один из двух не объявляет
+<code>strict</code> — ни в <code>inputSchema</code>, ни в описании, ни в поле
+<code>instructions</code> сервера, где расписан весь рекомендуемый сценарий. На странице
+<code>vibemarketolog.ru/connect</code> этого слова тоже нет.</p>
+
+<div class="cards">
+  <div class="card"><span class="tag">через MCP, как есть</span>
+    <p><code>params: {image_input: […]}</code> → <span class="hit">valid: true</span>,
+    <code>rejected: ["image_input"]</code>, 196 ₽</p></div>
+  <div class="card"><span class="tag">со strict внутри params</span>
+    <p><code>params: {…, strict: true}</code> → <code>valid: false</code>.
+    Защита достижима — если угадать недокументированный ключ.</p></div>
+  <div class="card"><span class="tag">что читает агент</span>
+    <p>Схему. В схеме этого ключа нет, поэтому сценарий по умолчанию — незащищённый.</p></div>
+</div>
+
+<p class="sub" style="margin-top:22px"><strong>Стоимость исправления на вашей стороне —
+одна строка JSON Schema на инструмент.</strong> Мы собрали прокси, который делает это
+снаружи: он пробрасывает все девять инструментов, добавляет <code>strict</code> в схему
+двух из них, пересчитывает вердикт по <code>rejected</code> вместо <code>valid</code>
+и переписывает закреплённый тариф на базовый. Проверено на живом сервере:</p>
+
+<pre>grok-itv-20 + duration 5
+  [mainager] model rewritten grok-itv-20 → grok-itv
+  upstream estimate: <span style="color:var(--good)">36 ₽</span>   (было 316 ₽)
+
+trap body → generate_content
+  refused by MAINAGER: the provider would drop image_input
+  and still charge 196 RUB          <span style="color:var(--muted)">— наверх не ушло</span></pre>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">07</span>Сколько это стоит на истории аккаунта</h2>
+<p class="sub"><code>GET /generations</code> бесплатен и отдаёт модель и стоимость каждой
+прошлой генерации. Прогнав историю через маршрутизатор, можно посчитать, сколько было
+потрачено сверх минимума. Ниже — демонстрация на синтетической истории:
+у аккаунта, на котором делался этот разбор, генераций нет вовсе.</p>
+
+<figure>
+  <table>
+    <thead><tr><th>id</th><th>оплачено</th><th class="num">₽</th><th>дешевле сегодня</th><th class="num">₽</th><th class="num">разница</th></tr></thead>
+    <tbody>
+      <tr><td>syn_1</td><td><code>grok-itv-20</code></td><td class="num">316</td><td><code>grok-itv</code></td><td class="num">36</td><td class="num">280</td></tr>
+      <tr><td>syn_2</td><td><code>grok-itv-10</code></td><td class="num">196</td><td><code>grok-itv</code></td><td class="num">36</td><td class="num">160</td></tr>
+      <tr><td>syn_3</td><td><code>kling-3.0-std</code></td><td class="num">250</td><td><code>grok-itv</code></td><td class="num">36</td><td class="num">214</td></tr>
+      <tr><td>syn_4</td><td><code>z-image</code></td><td class="num">1,2</td><td><code>z-image</code></td><td class="num">1,2</td><td class="num">0</td></tr>
+      <tr class="skip"><td>syn_5</td><td colspan="5">пропущено: возврат, деньги не списывались</td></tr>
+      <tr class="skip"><td>syn_6</td><td colspan="5">пропущено: модели <code>veo2-legacy</code> больше нет в каталоге</td></tr>
+    </tbody>
+    <tfoot><tr><th colspan="2">итого по проанализированным</th><th class="num">763,2</th><th></th><th class="num">109,2</th><th class="num">654</th></tr></tfoot>
+  </table>
+  <figcaption>Записи, для которых нельзя восстановить исходные параметры, помечаются
+  как непроанализированные и <strong>исключаются из итога</strong>, а не угадываются.
+  Сравнение идёт с сегодняшними ценами — это действие, а не исторический аудит.</figcaption>
+</figure>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<h2><span class="n">08</span>Что из этого построено</h2>
+<p class="sub">Контур управления между агентом и деньгами клиента. Проверки идут от самой
+дешёвой к самой дорогой; ни в одной из них не участвует языковая модель — всё детерминировано,
+потому что во входящем канале есть 4 секунды до того, как ответит автоответчик платформы.</p>
+
+<div class="planes">
+  <div class="plane"><div class="h"><span class="num" style="background:var(--s1)">1</span>
+    <strong>Preflight</strong><span class="built yes">готово</span></div>
+    <ul><li>реестр моделей из <code>/capabilities</code></li>
+    <li>тело запроса под конкретную модель</li>
+    <li>цена только через <code>estimate</code></li>
+    <li>смета сценария целиком</li></ul></div>
+  <div class="plane"><div class="h"><span class="num" style="background:var(--s2)">2</span>
+    <strong>Guard</strong><span class="built yes">готово</span></div>
+    <ul><li>стоп-кран, общий для воркеров</li>
+    <li>уровни автономии L0–L3</li>
+    <li>детектор циклов, потолки</li>
+    <li>аудит-лог с цепочкой хешей</li></ul></div>
+  <div class="plane"><div class="h"><span class="num" style="background:var(--s3)">3</span>
+    <strong>Postflight</strong><span class="built no">частично</span></div>
+    <ul><li>отчёт о перерасходе — готов</li>
+    <li>проверка результата (OCR, ffprobe)</li>
+    <li>перезапуск в рамках бюджета</li>
+    <li>метрика: ₽ за принятый результат</li></ul></div>
+  <div class="plane"><div class="h"><span class="num" style="background:var(--muted)">4</span>
+    <strong>Fastpath</strong><span class="built no">проект</span></div>
+    <ul><li>ответ во входящий канал до 4 с</li>
+    <li>обход платного автоответчика</li>
+    <li>CRM-действия через белый список</li></ul></div>
+</div>
+
+<footer>
+  <p>Воспроизводится ключом уровня <code>read</code> + <code>generate</code>.
+  Все замеры — на бесплатных эндпоинтах.</p>
+  <pre style="margin-top:12px">curl -H "Authorization: Bearer $TOKEN" .../api/agent/capabilities
+curl -H "Authorization: Bearer $TOKEN" .../api/agent/prices
+# тот же duration: 5, разные model → 36 / 196 / 316 ₽
+curl -X POST … -d '{"type":"video","model":"grok-itv","prompt":"…",
+     "image_urls":["…"],"duration":5,"strict":true}' .../generate/estimate</pre>
+  <p style="margin-top:14px">Баланс до разбора — 600 ₽. После — 600 ₽.</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var css = function(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(name, attrs){
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function fmt(v){ return String(v).replace(".", ","); }
+
+  function legend(hostId, items){
+    var host = document.getElementById(hostId);
+    host.innerHTML = "";
+    items.forEach(function(it){
+      var s = document.createElement("span");
+      var sw = document.createElement("i");
+      sw.className = "sw"; sw.style.background = it.color;
+      s.appendChild(sw);
+      s.appendChild(document.createTextNode(it.label));
+      host.appendChild(s);
+    });
+  }
+
+  function tipFor(hostId, tipId){
+    var host = document.getElementById(hostId), tip = document.getElementById(tipId);
+    return {
+      show: function(x, y, text){
+        tip.textContent = text; tip.style.opacity = "1";
+        tip.style.left = x + "px"; tip.style.top = y + "px";
+      },
+      hide: function(){ tip.style.opacity = "0"; },
+      host: host
+    };
+  }
+
+  /* ---- bar chart: one value per category, direct-labelled ---- */
+  function barChart(hostId, tipId, data, opts){
+    var W = 720, H = 300, m = {t:18, r:16, b:52, l:56};
+    var iw = W - m.l - m.r, ih = H - m.t - m.b;
+    var max = Math.max.apply(null, data.map(function(d){ return d.v; })) * 1.18;
+    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, role:"img", "aria-label":opts.alt});
+    var ticks = 4, i, y;
+
+    for (i = 0; i <= ticks; i++){
+      y = m.t + ih - (ih * i / ticks);
+      svg.appendChild(el("line", {x1:m.l, x2:m.l+iw, y1:y, y2:y, stroke:css("--grid"), "stroke-width":1}));
+      var lab = el("text", {x:m.l-10, y:y+4, "text-anchor":"end", fill:css("--muted"),
+                            "font-size":12, "font-family":"var(--mono)"});
+      lab.textContent = Math.round(max * i / ticks);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(el("line", {x1:m.l, x2:m.l+iw, y1:m.t+ih, y2:m.t+ih, stroke:css("--axis"), "stroke-width":1}));
+
+    var band = iw / data.length, bw = Math.min(96, band * 0.5);
+    var tip = tipFor(hostId, tipId);
+    data.forEach(function(d, idx){
+      var cx = m.l + band * idx + band / 2;
+      var h = ih * (d.v / max);
+      var yTop = m.t + ih - h;
+      var r = el("rect", {x:cx-bw/2, y:yTop, width:bw, height:h, rx:4, fill:d.color});
+      r.style.cursor = "crosshair";
+      r.addEventListener("mousemove", function(ev){
+        var b = tip.host.getBoundingClientRect();
+        tip.show(ev.clientX-b.left, ev.clientY-b.top, d.label+"\n"+fmt(d.v)+" ₽");
+      });
+      r.addEventListener("mouseleave", tip.hide);
+      svg.appendChild(r);
+
+      var v = el("text", {x:cx, y:yTop-9, "text-anchor":"middle", fill:css("--ink"),
+                          "font-size":15, "font-weight":650});
+      v.textContent = fmt(d.v)+" ₽";
+      svg.appendChild(v);
+
+      var t = el("text", {x:cx, y:m.t+ih+22, "text-anchor":"middle", fill:css("--ink-2"),
+                          "font-size":12.5, "font-family":"var(--mono)"});
+      t.textContent = d.label;
+      svg.appendChild(t);
+      if (d.note){
+        var n2 = el("text", {x:cx, y:m.t+ih+40, "text-anchor":"middle", fill:css("--muted"), "font-size":12});
+        n2.textContent = d.note;
+        svg.appendChild(n2);
+      }
+    });
+    var host = document.getElementById(hostId);
+    host.innerHTML = ""; host.appendChild(svg);
+  }
+
+  /* ---- step/line chart with crosshair ----
+     Only measured points are plotted. A null means "not measured", and the line
+     joins the measured points either side of it rather than inventing a value. */
+  function lineChart(hostId, tipId, series, opts){
+    var W = 720, H = 330, m = {t:18, r:104, b:50, l:58};
+    var iw = W - m.l - m.r, ih = H - m.t - m.b;
+    var xs = opts.x, xmin = xs[0], xmax = xs[xs.length-1];
+    var ymax = 0;
+    series.forEach(function(s){ s.y.forEach(function(v){ if (v !== null && v > ymax) ymax = v; }); });
+    ymax *= 1.15;
+    // Ordinal spacing when the sample points are not a continuous measurement —
+    // 1000 and 1001 sit on top of each other on a linear axis, and the doubling
+    // between them is the whole point of the chart.
+    var X = opts.ordinal
+      ? function(v){ return m.l + iw * xs.indexOf(v) / (xs.length - 1); }
+      : function(v){ return m.l + iw * (v - xmin) / (xmax - xmin); };
+    var Y = function(v){ return m.t + ih - ih * (v / ymax); };
+    var svg = el("svg", {viewBox:"0 0 "+W+" "+H, role:"img", "aria-label":opts.alt});
+    var i, y;
+
+    for (i = 0; i <= 4; i++){
+      y = m.t + ih - (ih * i / 4);
+      svg.appendChild(el("line", {x1:m.l, x2:m.l+iw, y1:y, y2:y, stroke:css("--grid"), "stroke-width":1}));
+      var lab = el("text", {x:m.l-10, y:y+4, "text-anchor":"end", fill:css("--muted"),
+                            "font-size":12, "font-family":"var(--mono)"});
+      lab.textContent = Math.round(ymax * i / 4);
+      svg.appendChild(lab);
+    }
+    svg.appendChild(el("line", {x1:m.l, x2:m.l+iw, y1:m.t+ih, y2:m.t+ih, stroke:css("--axis"), "stroke-width":1}));
+    xs.forEach(function(xv){
+      var t = el("text", {x:X(xv), y:m.t+ih+22, "text-anchor":"middle", fill:css("--ink-2"),
+                          "font-size":12, "font-family":"var(--mono)"});
+      t.textContent = xv;
+      svg.appendChild(t);
+    });
+    var ax = el("text", {x:m.l+iw/2, y:H-8, "text-anchor":"middle", fill:css("--muted"), "font-size":12});
+    ax.textContent = opts.xlabel;
+    svg.appendChild(ax);
+
+    var labels = [];
+    series.forEach(function(s){
+      var pts = [];
+      xs.forEach(function(xv, k){ if (s.y[k] !== null) pts.push([xv, s.y[k]]); });
+      if (!pts.length) return;
+
+      var d = "M" + X(pts[0][0]) + " " + Y(pts[0][1]);
+      for (var k = 1; k < pts.length; k++){
+        if (s.step) d += "H" + X(pts[k][0]) + "V" + Y(pts[k][1]);
+        else d += "L" + X(pts[k][0]) + " " + Y(pts[k][1]);
+      }
+      svg.appendChild(el("path", {d:d, fill:"none", stroke:s.color, "stroke-width":2,
+                                  "stroke-linejoin":"round", "stroke-linecap":"round"}));
+      pts.forEach(function(p){
+        svg.appendChild(el("circle", {cx:X(p[0]), cy:Y(p[1]), r:4.5, fill:s.color,
+                                      stroke:css("--surface"), "stroke-width":2}));
+      });
+      labels.push({y:Y(pts[pts.length-1][1]), text:s.short, color:s.color});
+    });
+
+    // Nudge direct labels apart so a close pair stays readable.
+    labels.sort(function(a, b){ return a.y - b.y; });
+    for (var li = 1; li < labels.length; li++){
+      if (labels[li].y - labels[li-1].y < 15) labels[li].y = labels[li-1].y + 15;
+    }
+    labels.forEach(function(l){
+      var lt = el("text", {x:m.l+iw+10, y:l.y+4, fill:css("--ink"),
+                           "font-size":12.5, "font-weight":600});
+      lt.textContent = l.text;
+      svg.appendChild(lt);
+    });
+
+    var tip = tipFor(hostId, tipId);
+    var cross = el("line", {x1:0, x2:0, y1:m.t, y2:m.t+ih, stroke:css("--axis"),
+                            "stroke-width":1, opacity:0});
+    svg.appendChild(cross);
+    var hit = el("rect", {x:m.l, y:m.t, width:iw, height:ih, fill:"transparent"});
+    hit.style.cursor = "crosshair";
+    hit.addEventListener("mousemove", function(ev){
+      var pt = svg.getBoundingClientRect();
+      var px = (ev.clientX - pt.left) / pt.width * W;
+      var best = 0, bd = Infinity;
+      xs.forEach(function(xv, k){ var dd = Math.abs(X(xv) - px); if (dd < bd){ bd = dd; best = k; } });
+      cross.setAttribute("x1", X(xs[best])); cross.setAttribute("x2", X(xs[best]));
+      cross.setAttribute("opacity", 1);
+      var lines = [opts.xlabel + ": " + xs[best]];
+      series.forEach(function(s){
+        if (s.y[best] !== null) lines.push(s.short + "  " + fmt(s.y[best]) + " ₽");
+      });
+      var b = tip.host.getBoundingClientRect();
+      tip.show(ev.clientX-b.left, ev.clientY-b.top, lines.join("\n"));
+    });
+    hit.addEventListener("mouseleave", function(){ cross.setAttribute("opacity", 0); tip.hide(); });
+    svg.appendChild(hit);
+
+    var host = document.getElementById(hostId);
+    host.innerHTML = ""; host.appendChild(svg);
+  }
+
+  function draw(){
+    var S1 = css("--s1"), S2 = css("--s2"), S3 = css("--s3");
+
+    legend("lg-bar", [{color:S1,label:"базовый идентификатор"},{color:S2,label:"закреплённый тариф"}]);
+    barChart("c-bar", "t-bar", [
+      {label:"grok-itv", v:36, color:S1, note:"duration выбирает тариф"},
+      {label:"grok-itv-10", v:196, color:S2, note:"duration игнорируется"},
+      {label:"grok-itv-20", v:316, color:S2, note:"duration игнорируется"}
+    ], {alt:"Цена ролика 5 секунд: 36, 196 и 316 рублей"});
+
+    // null = не замерялось. Линия соединяет только измеренные точки.
+    legend("lg-line", [{color:S1,label:"grok-itv"},{color:S2,label:"veo3_fast"},{color:S3,label:"seedance-2-mini"}]);
+    lineChart("c-line", "t-line", [
+      {short:"grok-itv", color:S1, step:true, y:[36, 36, 36, 196, 196, 316]},
+      {short:"veo3_fast", color:S2,          y:[null, 120, null, null, 120, 120]},
+      {short:"seedance", color:S3,           y:[null, 70, null, null, 140, 210]}
+    ], {x:[1,5,6,7,10,15], xlabel:"секунд",
+        alt:"Цена по длительности: grok-itv ступенчато 36-196-316, veo3_fast ровно 120"});
+
+    legend("lg-tts", [{color:S1,label:"el-tts-turbo"},{color:S2,label:"gemini-flash-tts"},{color:S3,label:"el-tts-multilingual-v2"}]);
+    lineChart("c-tts", "t-tts", [
+      {short:"el-turbo", color:S1, step:true, y:[6, 6, 12, 18, 36]},
+      {short:"gemini", color:S2, step:true,   y:[13, 13, 26, 39, 78]},
+      {short:"el-multi", color:S3,            y:[39, 39, 39, 39, 39]}
+    ], {x:[10,1000,1001,2500,5001], xlabel:"символов в prompt", ordinal:true,
+        alt:"Цена озвучки по длине текста: у двух моделей она удваивается после 1000 символов"});
+  }
+
+  draw();
+
+  var btn = document.getElementById("themeToggle");
+  btn.addEventListener("click", function(){
+    var cur = document.documentElement.getAttribute("data-theme");
+    var sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = cur ? (cur === "dark" ? "light" : "dark") : (sysDark ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", next);
+    draw();
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+})();
+</script>
+</body>
+</html>
