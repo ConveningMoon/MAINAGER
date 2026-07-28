@@ -93,6 +93,23 @@
   blockquote{margin:18px 0; padding:2px 0 2px 16px; border-left:3px solid var(--axis);
              color:var(--ink-2); font-size:15px}
 
+  .fix{background:var(--surface); border:1px solid var(--hair); border-left:3px solid var(--good);
+       border-radius:10px; padding:16px 18px; margin:18px 0}
+  .fix h3{font-size:14.5px; color:var(--good); margin:0 0 10px;
+          font-family:var(--mono); text-transform:uppercase; letter-spacing:.05em}
+  .fix ol{margin:0; padding-left:20px; font-size:14.5px; color:var(--ink-2)}
+  .fix ol li{margin:6px 0}
+  .fix ol li b{color:var(--ink); font-weight:600}
+  .effort{display:inline-block; font:600 11.5px/1 var(--mono); padding:3px 8px; border-radius:5px;
+          background:color-mix(in srgb, var(--good) 14%, transparent); color:var(--good); margin-left:8px}
+  .promptbox{position:relative}
+  .promptbox pre{white-space:pre-wrap; word-break:break-word}
+  .copy{position:absolute; top:24px; right:12px; background:var(--plane); color:var(--ink-2);
+        border:1px solid var(--hair); border-radius:6px; padding:5px 10px;
+        font:12px/1 system-ui,sans-serif; cursor:pointer}
+  .caveat{border-left:3px solid var(--warn); background:var(--surface); border-radius:8px;
+          padding:14px 16px; margin:20px 0; font-size:14.5px; color:var(--ink-2)}
+
   .planes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin-top:20px}
   .plane{background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:16px}
   .plane .h{display:flex; align-items:center; gap:9px; margin-bottom:8px}
@@ -133,7 +150,7 @@
   <div class="tile bad"><div class="v">8,8×</div><div class="k">разброс цены за один и тот же 5-секундный ролик</div><div class="n">36 ₽ против 316 ₽</div></div>
   <div class="tile bad"><div class="v">196 ₽</div><div class="k">за вызов, который смета помечает как <code>valid: true</code> и всё равно ломает</div><div class="n">rejected: [image_input]</div></div>
   <div class="tile bad"><div class="v">0 из 9</div><div class="k">MCP-инструментов, где виден флаг <code>strict</code></div><div class="n">ни в схеме, ни в instructions</div></div>
-  <div class="tile"><div class="v">16</div><div class="k">идентификаторов, по которым каталог и прайс не сходятся</div><div class="n">8 + 6 + 2 категории</div></div>
+  <div class="tile"><div class="v">13</div><div class="k">идентификаторов, по которым каталог и прайс не сходятся</div><div class="n">4 + 7 + 2 категории</div></div>
 </div>
 
 <!-- ─────────────────────────────────────────────────────────── -->
@@ -200,7 +217,8 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
   <details><summary>Таблица значений</summary>
     <div class="scroll-x"><table><thead><tr><th>модель</th><th class="num">1000</th><th class="num">1001</th><th class="num">2500</th><th class="num">5001</th><th class="num">в /prices</th></tr></thead>
     <tbody>
-      <tr><td><code>el-tts-turbo</code></td><td class="num">6</td><td class="num">12</td><td class="num">18</td><td class="num">36</td><td class="num">29</td></tr>
+      <tr><td><code>el-tts-turbo</code></td><td class="num">8</td><td class="num">16</td><td class="num">24</td><td class="num">48</td><td class="num">29</td></tr>
+      <tr><td><code>my-voice-tts</code></td><td class="num">10</td><td class="num">20</td><td class="num">30</td><td class="num">60</td><td class="num">29</td></tr>
       <tr><td><code>gemini-flash-tts</code></td><td class="num">13</td><td class="num">26</td><td class="num">39</td><td class="num">78</td><td class="num">13</td></tr>
       <tr><td><code>el-tts-multilingual-v2</code></td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td><td class="num">39</td></tr>
     </tbody></table></div>
@@ -216,11 +234,26 @@ grok уходит на 316 ₽, veo остаётся на 120 ₽.</p>
 ошибка, которую можно один раз поправить: сверять нужно на старте каждого процесса.</p>
 
 <div class="tiles">
-  <div class="tile bad"><div class="v">8</div><div class="k">моделей генерируются, но цены в <code>/prices</code> нет</div><div class="n">утром было 5</div></div>
-  <div class="tile bad"><div class="v">6</div><div class="k">цен есть, а модели в каталоге нет</div><div class="n">включая grok-itv-30 за 436 ₽</div></div>
+  <div class="tile bad"><div class="v">4</div><div class="k">модели генерируются, но цены в <code>/prices</code> нет</div><div class="n">за день было 5, потом 8, теперь 4</div></div>
+  <div class="tile bad"><div class="v">7</div><div class="k">цен есть, а модели в каталоге нет</div><div class="n">включая grok-itv-30 за 436 ₽</div></div>
   <div class="tile"><div class="v">2</div><div class="k">модели лежат в разных категориях в каталоге и в прайсе</div><div class="n">gemini-omni-audio / -character</div></div>
   <div class="tile bad"><div class="v">+38%</div><div class="k">насколько занижен потолок расходов, собранный по каталогу</div><div class="n">316 ₽ против реальных 436 ₽</div></div>
 </div>
+
+<figure style="margin-top:20px">
+  <div class="scroll-x"><table>
+    <thead><tr><th>замер 28.07</th><th class="num">моделей в voice</th><th class="num">всего ключей</th><th class="num">скрытых</th><th class="num">без цены</th></tr></thead>
+    <tbody>
+      <tr><td>утро</td><td class="num">5</td><td class="num">50</td><td class="num">88</td><td class="num">5</td></tr>
+      <tr><td>вечер</td><td class="num">2</td><td class="num">47</td><td class="num">88</td><td class="num">8</td></tr>
+      <tr><td>поздний вечер</td><td class="num">7</td><td class="num">52</td><td class="num">92</td><td class="num">4</td></tr>
+    </tbody>
+  </table></div>
+  <figcaption>Три состояния <code>/prices</code> за один рабочий день. Каталог
+  <code>/capabilities</code> за то же время не изменился ни на байт. Между вторым и
+  третьим замером вернулись четыре модели <code>el-*</code> и появилась новая
+  <code>my-voice-tts</code> — в прайсе 29 ₽, по смете 10 ₽.</figcaption>
+</figure>
 
 <p class="sub" style="margin-top:22px">Каталог внутри себя тоже не сходится:
 <code>getting_started</code> перечисляет <code>grok-itv-10|20|30</code>, а
@@ -308,7 +341,131 @@ trap body → generate_content
 </figure>
 
 <!-- ─────────────────────────────────────────────────────────── -->
-<h2><span class="n">08</span>Что из этого построено</h2>
+<h2><span class="n">08</span>Как это чинится</h2>
+<p class="sub">Ниже — конкретные действия по каждой находке и готовый текст задачи,
+который можно отдать разработчику или кодовому агенту. Оценка трудоёмкости — моя,
+исходя из того, что видно снаружи.</p>
+
+<div class="caveat"><strong>Оговорка, без которой список нечестен.</strong>
+Я вижу ваш API только снаружи: схемы, ответы, коды ошибок. Внутреннего кода,
+языка, фреймворка и того, как у вас устроена тарификация, я не знаю и не
+угадываю. Поэтому ниже сформулировано <em>что должно измениться в наблюдаемом
+поведении</em>, а не как это реализовать у вас. Оценки часов — грубые и
+исходят из размера внешнего изменения.</div>
+
+<div class="fix">
+  <h3>Правка 1 — вернуть <code>strict</code> в MCP-схему <span class="effort">~1 строка на инструмент</span></h3>
+  <ol>
+    <li>Добавить свойство <code>strict</code> (boolean, <code>default: true</code>) в
+      <code>inputSchema</code> инструментов <b>estimate_generation</b> и <b>generate_content</b>.</li>
+    <li>Упомянуть его в поле <code>instructions</code> MCP-сервера — там уже расписан
+      весь остальной сценарий, не хватает одной фразы.</li>
+    <li>Добавить упоминание на страницу <code>vibemarketolog.ru/connect</code>.</li>
+  </ol>
+</div>
+
+<div class="fix">
+  <h3>Правка 2 — развести <code>valid</code> на два вопроса <span class="effort">~1 день</span></h3>
+  <ol>
+    <li>Возвращать <code>valid: false</code>, когда <code>rejected</code> непустой —
+      независимо от того, передан ли <code>strict</code>.</li>
+    <li>Вынести денежную часть в отдельное поле, например <code>affordable</code>,
+      чтобы «тело сломано» и «не хватает баланса» не смешивались.</li>
+    <li>Чтобы не ломать существующих клиентов — оставить <code>valid</code> как есть
+      и добавить рядом <code>body_clean</code> и <code>affordable</code>.</li>
+  </ol>
+</div>
+
+<div class="fix">
+  <h3>Правка 3 — убрать закреплённый тариф из примера <span class="effort">~1 час</span></h3>
+  <ol>
+    <li>В <code>capabilities.getting_started.image_to_video</code> заменить
+      <code>grok-itv-10|20|30</code> на <code>grok-itv</code> и написать, что
+      длительность сама выберет тариф.</li>
+    <li>Если закрепление тарифа — намеренная возможность, то при нём возвращать
+      <code>duration</code> в <code>rejected</code>: сейчас параметр принимается,
+      объявлен валидным и не действует.</li>
+    <li>Генерировать <code>getting_started</code> из того же источника, что и
+      <code>models</code> — сейчас они противоречат друг другу по числу тарифов.</li>
+  </ol>
+</div>
+
+<div class="fix">
+  <h3>Правка 4 — честные единицы и имена в прайсе <span class="effort">~2 дня</span></h3>
+  <ol>
+    <li>Добавить в <code>/prices</code> поле единицы измерения:
+      <code>per_call</code> / <code>per_1000_chars</code> / <code>per_second</code>.
+      Сейчас числа в одной колонке несравнимы, но выглядят сравнимыми.</li>
+    <li>Переименовать <code>price</code> в каталоге в <code>price_from</code> —
+      это цена при дефолтных параметрах, а не цена вызова.</li>
+    <li>Собрать <code>/prices</code> и <code>/capabilities</code> из одного источника:
+      сейчас 13 идентификаторов есть только в одном из двух.</li>
+    <li>Проверить <code>my-voice-tts</code>: в прайсе 29 ₽, по смете 10 ₽ за начатую
+      тысячу символов — расходятся два живых ответа одного API.</li>
+  </ol>
+</div>
+
+<h3 style="margin-top:34px">Текст задачи для разработчика или кодового агента</h3>
+<p class="sub">Скопировать целиком. Сформулировано в терминах наблюдаемого поведения,
+чтобы не зависеть от вашего стека.</p>
+
+<div class="promptbox">
+<button class="copy" id="copyBtn" type="button">копировать</button>
+<pre id="promptText">Контекст: внешний аудит Agent API от 28.07.2026. Все факты ниже получены
+замерами через GET /capabilities, GET /prices и POST /generate/estimate.
+Ничего не предполагается — каждый пункт воспроизводится бесплатно.
+
+Задача: устранить четыре расхождения между тем, что API обещает, и тем,
+что он делает. Порядок — по убыванию денежного эффекта.
+
+1. MCP: сделать strict видимым.
+   Сейчас: inputSchema инструментов estimate_generation и generate_content
+   не содержит свойства strict. Флаг работает, если передать его внутри
+   params, но обнаружить его по схеме нельзя.
+   Проверка: tools/list не содержит "strict" ни в одной из девяти схем.
+   Нужно: добавить strict (boolean, default true) в inputSchema обоих
+   инструментов; упомянуть в instructions сервера.
+   Критерий приёмки: агент, читающий только схему, может отключить
+   тихое отбрасывание параметров.
+
+2. Развести семантику поля valid.
+   Сейчас: POST /generate/estimate с image_input на видео-модели без strict
+   возвращает valid=true одновременно с rejected=["image_input"].
+   Корректное тело, на которое не хватает баланса, возвращает valid=false.
+   Нужно: valid отражает только корректность тела; денежная достижимость —
+   отдельное поле. Либо добавить body_clean и affordable, не трогая valid.
+   Критерий приёмки: непустой rejected никогда не сопровождается «годен».
+
+3. Убрать закреплённый тариф из примера в документации.
+   Сейчас: capabilities.getting_started.image_to_video показывает
+   grok-itv-10|20|30. На закреплённом тарифе duration принимается,
+   попадает в valid_params, не попадает в rejected и не влияет ни на цену,
+   ни на выбор тарифа. На базовом идентификаторе duration выбирает
+   минимально достаточный тариф.
+   Замер: ролик 5 секунд стоит 36 RUB на grok-itv, 196 RUB на grok-itv-10,
+   316 RUB на grok-itv-20.
+   Нужно: заменить пример на базовый идентификатор; либо возвращать
+   duration в rejected, когда тариф закреплён.
+   Критерий приёмки: следование примеру из документации не приводит
+   к переплате в 8,8 раза.
+
+4. Единицы измерения и согласованность прайса.
+   Сейчас: числа в /prices находятся в трёх разных единицах без поля,
+   которое бы их различало — per_call, per_1000_chars и величины,
+   не совпадающие ни с одной измеренной длиной.
+   Замеры: gemini-flash-tts 13 RUB за начатую тысячу символов;
+   el-tts-multilingual-v2 39 RUB за вызов любой длины;
+   my-voice-tts 29 RUB в /prices против 10 RUB по смете.
+   Кроме того, 13 идентификаторов присутствуют только в одном из двух
+   источников, включая grok-itv-30 и grok-ttv-30 по 436 RUB, которых нет
+   в tiers каталога.
+   Нужно: поле единицы измерения в /prices; переименовать price в
+   price_from; собирать оба эндпоинта из общего источника.
+   Критерий приёмки: сортировка моделей по цене из /prices даёт тот же
+   порядок, что сортировка по смете.</pre>
+</div>
+
+<h2><span class="n">09</span>Что из этого построено</h2>
 <p class="sub">Контур управления между агентом и деньгами клиента. Проверки идут от самой
 дешёвой к самой дорогой; ни в одной из них не участвует языковая модель — всё детерминировано,
 потому что во входящем канале есть 4 секунды до того, как ответит автоответчик платформы.</p>
@@ -560,7 +717,7 @@ curl -X POST … -d '{"type":"video","model":"grok-itv","prompt":"…",
 
     legend("lg-tts", [{color:S1,label:"el-tts-turbo"},{color:S2,label:"gemini-flash-tts"},{color:S3,label:"el-tts-multilingual-v2"}]);
     lineChart("c-tts", "t-tts", [
-      {short:"el-turbo", color:S1, step:true, y:[6, 6, 12, 18, 36]},
+      {short:"el-turbo", color:S1, step:true, y:[8, 8, 16, 24, 48]},
       {short:"gemini", color:S2, step:true,   y:[13, 13, 26, 39, 78]},
       {short:"el-multi", color:S3,            y:[39, 39, 39, 39, 39]}
     ], {x:[10,1000,1001,2500,5001], xlabel:"символов в prompt", ordinal:true,
@@ -568,6 +725,21 @@ curl -X POST … -d '{"type":"video","model":"grok-itv","prompt":"…",
   }
 
   draw();
+
+  var copyBtn = document.getElementById("copyBtn");
+  if (copyBtn){
+    copyBtn.addEventListener("click", function(){
+      var text = document.getElementById("promptText").textContent;
+      var done = function(){ copyBtn.textContent = "скопировано"; setTimeout(function(){ copyBtn.textContent = "копировать"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, function(){}); }
+      else {
+        var ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  }
 
   var btn = document.getElementById("themeToggle");
   btn.addEventListener("click", function(){
