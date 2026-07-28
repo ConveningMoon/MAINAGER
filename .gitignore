@@ -1,0 +1,75 @@
+# --- local working notes ---
+# Root-level markdown is ignored by default; tracked documents are listed
+# explicitly. Keeps scratch notes and drafts out of the repo by construction.
+/*.md
+!/README.md
+!/FINDINGS.md
+!/COSTS.md
+
+# --- secrets ---
+.env
+.env.*
+!.env.example
+*.token
+*_token
+secrets/
+
+# --- raw API dumps that may carry account identifiers ---
+data/raw/
+data/me.json
+data/balance.json
+data/generations.json
+COSTS_raw.*
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- tooling caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.hypothesis/
+
+# --- editors / os ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- local artifacts ---
+artifacts/
+*.log
