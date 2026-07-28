@@ -223,7 +223,7 @@
 <body>
 <div class="topbar">
   <div class="row">
-    <a class="brand" href="./">MAIN<i>A</i>GER</a>
+    <a class="brand" href="./">M<i>AI</i>NAGER</a>
     <nav class="tabs">
       <a href="./" aria-current="page">Находки</a>
       <a href="./tests.html">Проверки</a>
@@ -239,13 +239,13 @@
   <p class="kicker">внешний аудит · 28.07.2026 · потрачено 1,2 ₽</p>
   <h1>Где ваш Agent API <em>теряет деньги</em> клиента</h1>
   <p class="lede">Разбор <code>lk.vibemarketolog.ru/api/agent</code> и MCP-коннектора:
-  семь мест, где документация, каталог и прайс расходятся с тем, что реально
+  девять мест, где документация, каталог и прайс расходятся с тем, что реально
   списывается. Все цифры получены замерами, а не чтением.</p>
   <p class="stamp">28.07.2026 · api_version 1.0.0 · MCP 1.1.0 · ключ уровня read+generate ·
   потрачено на весь аудит: <b>1,2 ₽ из 600</b> · <a href="./tests.html" style="color:inherit">как проверялось</a></p>
 </header>
 
-<p class="sub">Ниже — только то, что удалось измерить. Все семь находок доказаны
+<p class="sub">Ниже — только то, что удалось измерить. Все девять находок доказаны
 бесплатными эндпоинтами: <code>GET</code> и <code>POST /generate/estimate</code>, который
 ничего не списывает. Отдельная пара платных вызовов на 1,2 ₽ ушла на единственный
 вопрос, который иначе не проверить — он разобран во вкладке
@@ -544,8 +544,36 @@ trap body → generate_content
 <!-- ─────────────────────────────────────────────────────────── -->
 </section>
 
+<section id="s07b" class="rise">
+  <div class="shead"><span class="n">08</span><h2>Слово «edit» в названии стоит дороже</h2></div>
+  <p class="sub">Логично считать, что доработать готовую картинку дешевле, чем нарисовать
+  новую. Проверил — наоборот. Специальные <code>*-edit</code> варианты дороже своих базовых
+  моделей, а обычные модели делают ту же правку по цене генерации с нуля.</p>
+
+  <figure class="rise">
+    <div class="scroll-x"><table>
+      <thead><tr><th>Правка существующей картинки</th><th>Как</th><th class="num">Цена</th></tr></thead>
+      <tbody>
+        <tr><td><code>seedream-5-pro-edit</code></td><td>специальная edit-модель</td><td class="num">45 ₽</td></tr>
+        <tr><td><code>gpt-image-2-edit</code></td><td>специальная edit-модель</td><td class="num">22 ₽</td></tr>
+        <tr><td><code>seedream-4.5</code></td><td>обычная модель + <code>image_input</code></td><td class="num">15 ₽</td></tr>
+        <tr><td><code>nano-banana-2-lite</code></td><td>обычная модель + <code>image_input</code></td><td class="num">9 ₽</td></tr>
+      </tbody>
+    </table></div>
+    <figcaption>Разница <strong>в 5 раз</strong> за один класс операции. И у <em>всех</em>
+    моделей, принимающих <code>image_input</code> — включая сами <code>-edit</code> — в каталоге
+    стоит <code>preserves_input: false</code>: за наценку в 3–5 ₽ байтовая сохранность
+    оригинала тоже не обещается.</figcaption>
+  </figure>
+
+  <p class="sub">Качество у моделей разное, и это не «одно и то же за разные деньги».
+  Проблема в навигации: человеку нужно «отредактировать картинку», он ищет слово edit и
+  приходит к самому дорогому варианту. Ни каталог, ни документация не говорят, что дешёвый
+  путь существует.</p>
+</section>
+
 <section id="s08" class="rise">
-  <div class="shead"><span class="n">08</span><h2>Как это чинится</h2></div>
+  <div class="shead"><span class="n">09</span><h2>Как это чинится</h2></div>
 <p class="sub">Ниже — конкретные действия по каждой находке и готовый текст задачи,
 который можно отдать разработчику или кодовому агенту. Оценка трудоёмкости — моя,
 исходя из того, что видно снаружи.</p>
@@ -672,11 +700,13 @@ trap body → generate_content
 </section>
 
 <section id="s09" class="rise">
-  <div class="shead"><span class="n">09</span><h2>Что из этого построено</h2></div>
+  <div class="shead"><span class="n">10</span><h2>Что из этого построено</h2></div>
 <p class="sub">Контур управления между агентом и деньгами клиента. Проверки идут от самой
 дешёвой к самой дорогой; ни в одной из них не участвует языковая модель — всё детерминировано,
 потому что во входящем канале есть 4 секунды до того, как ответит автоответчик платформы.</p>
 
+<h3 style="margin:26px 0 2px; font:700 12px/1 var(--mono); letter-spacing:.08em;
+    text-transform:uppercase; color:var(--good)">Построено и покрыто тестами</h3>
 <div class="planes">
   <div class="plane"><div class="h"><span class="num" style="background:var(--s1)">1</span>
     <strong>Preflight</strong><span class="built yes">готово</span></div>
@@ -690,20 +720,35 @@ trap body → generate_content
     <li>уровни автономии L0–L3</li>
     <li>детектор циклов, потолки</li>
     <li>аудит-лог с цепочкой хешей</li></ul></div>
-  <div class="plane"><div class="h"><span class="num" style="background:var(--s3)">3</span>
-    <strong>Postflight</strong><span class="built no">частично</span></div>
-    <ul><li>отчёт о перерасходе — готов</li>
-    <li>проверка результата (OCR, ffprobe)</li>
+</div>
+
+<p class="sub" style="margin:20px 0 0">Плюс два элемента, которые работают
+поверх этих двух: <b>прокси перед вашим MCP</b> (добавляет <code>strict</code> в
+схему, переписывает закреплённый тариф на базовый) и <b>отчёт о перерасходе</b>
+по истории <code>GET /generations</code>. И транспорт с ретраями и лимитами:
+платный вызов повторяется только при наличии ключа идемпотентности.</p>
+
+<h3 style="margin:32px 0 2px; font:700 12px/1 var(--mono); letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted)">Спроектировано, но не построено — и почему</h3>
+<div class="planes">
+  <div class="plane"><div class="h"><span class="num" style="background:var(--muted)">3</span>
+    <strong>Postflight</strong><span class="built no">проект</span></div>
+    <ul><li>проверка результата: OCR, <code>ffprobe</code></li>
     <li>перезапуск в рамках бюджета</li>
-    <li>метрика: ₽ за принятый результат</li></ul></div>
+    <li>метрика ₽ за принятый результат</li>
+    <li><small>внешние бинарники и веса моделей; к разбору API не добавляют ни одного факта</small></li></ul></div>
   <div class="plane"><div class="h"><span class="num" style="background:var(--muted)">4</span>
     <strong>Fastpath</strong><span class="built no">проект</span></div>
     <ul><li>ответ во входящий канал до 4 с</li>
     <li>обход платного автоответчика</li>
-    <li>CRM-действия через белый список</li></ul></div>
+    <li>CRM-действия через белый список</li>
+    <li><small>на тестовом аккаунте нет входящего трафика — показать нечего</small></li></ul></div>
 </div>
 
-</section>
+<p class="sub" style="margin-top:18px">Это разделение намеренное. Находка про
+4 секунды и 10 ₽ верна независимо от того, написан код или нет; тратить на него
+инженерные часы, чтобы показать цикл long-poll без единого сообщения, смысла нет.</p>
+  </section>
 
 <footer>
   <p>Воспроизводится ключом уровня <code>read</code> + <code>generate</code>.
@@ -713,7 +758,9 @@ curl -H "Authorization: Bearer $TOKEN" .../api/agent/prices
 # тот же duration: 5, разные model → 36 / 196 / 316 ₽
 curl -X POST … -d '{"type":"video","model":"grok-itv","prompt":"…",
      "image_urls":["…"],"duration":5,"strict":true}' .../generate/estimate</pre>
-  <p style="margin-top:14px">Баланс до разбора — 600 ₽. После — 598,8 ₽.
+  <p style="margin-top:22px; color:var(--ink-2)"><b>Джеймс Вергара</b> · разбор и реализация ·
+  <a href="https://github.com/ConveningMoon/MAINAGER">github.com/ConveningMoon/MAINAGER</a></p>
+  <p style="margin-top:10px">Баланс до разбора — 600 ₽. После — 598,8 ₽.
   Полный журнал — во вкладке <a href="./tests.html">«Проведённые проверки»</a>.</p>
 </footer>
 
