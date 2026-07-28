@@ -26,11 +26,19 @@ async def test_fetch_sends_bearer_token_and_returns_catalog(settings: Settings) 
 
 
 @respx.mock
-async def test_insufficient_scope_surfaces_the_required_scope(settings: Settings) -> None:
+async def test_insufficient_scope_surfaces_the_scope_gap(settings: Settings) -> None:
+    """Shape taken from a real 403 on GET /yandex with a read+generate key."""
     respx.get("https://api.test/agent/capabilities").mock(
         return_value=httpx.Response(
             403,
-            json={"error": "insufficient_scope", "message": "scope required", "required": "read"},
+            json={
+                "status": "error",
+                "error": "insufficient_scope",
+                "message": "no yandex right for this method",
+                "required": "yandex",
+                "granted": ["read", "generate"],
+                "request_id": "79dcf2f7-1fdf-4a8f-bcb4-130d69a3bb66",
+            },
         )
     )
 
@@ -38,7 +46,9 @@ async def test_insufficient_scope_surfaces_the_required_scope(settings: Settings
         await fetch_capabilities(settings)
 
     assert excinfo.value.code == "insufficient_scope"
-    assert excinfo.value.required_scope == "read"
+    assert excinfo.value.required_scope == "yandex"
+    assert excinfo.value.granted_scopes == ["read", "generate"]
+    assert excinfo.value.request_id == "79dcf2f7-1fdf-4a8f-bcb4-130d69a3bb66"
 
 
 @respx.mock
@@ -53,6 +63,8 @@ async def test_non_json_error_body_still_produces_a_typed_error(settings: Settin
     assert excinfo.value.status_code == 502
     assert excinfo.value.code == "http_502"
     assert excinfo.value.required_scope is None
+    assert excinfo.value.granted_scopes == []
+    assert excinfo.value.request_id is None
 
 
 def test_snapshot_roundtrips(settings: Settings) -> None:

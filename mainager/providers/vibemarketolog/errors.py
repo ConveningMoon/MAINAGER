@@ -34,6 +34,18 @@ class VibeApiError(RuntimeError):
         required = self.payload.get("required")
         return required if isinstance(required, str) else None
 
+    @property
+    def granted_scopes(self) -> list[str]:
+        """Scopes the token does hold. Returned alongside ``required`` on a 403."""
+        granted = self.payload.get("granted")
+        return [s for s in granted if isinstance(s, str)] if isinstance(granted, list) else []
+
+    @property
+    def request_id(self) -> str | None:
+        """Server-side correlation id. Worth carrying into the audit log."""
+        request_id = self.payload.get("request_id")
+        return request_id if isinstance(request_id, str) else None
+
     @classmethod
     def from_response(cls, response: httpx.Response) -> VibeApiError:
         try:

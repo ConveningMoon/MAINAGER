@@ -57,7 +57,13 @@ def main(argv: list[str] | None = None) -> int:
     except VibeApiError as exc:
         print(f"error: {exc}", file=sys.stderr)
         if exc.required_scope:
-            print(f"the token is missing the '{exc.required_scope}' scope", file=sys.stderr)
+            granted = ", ".join(exc.granted_scopes) or "none"
+            print(
+                f"the token needs the '{exc.required_scope}' scope; it holds: {granted}",
+                file=sys.stderr,
+            )
+        if exc.request_id:
+            print(f"request_id: {exc.request_id}", file=sys.stderr)
         return 1
 
     parser.error(f"unknown command: {args.command}")
