@@ -817,7 +817,11 @@ trap body → generate_content
 
 <footer>
   <p>Воспроизводится ключом уровня <code>read</code> + <code>generate</code>.
-  Все замеры — на бесплатных эндпоинтах.</p>
+  Все замеры — на бесплатных эндпоинтах. Самый короткий способ проверить всё
+  сразу — не curl, а команда из репозитория:</p>
+  <pre style="margin-top:12px">pip install -e ".[mcp,dev]"
+mainager verify
+# заново измеряет все девять пунктов и печатает: сходится или нет</pre>
   <pre style="margin-top:12px">curl -H "Authorization: Bearer $TOKEN" .../api/agent/capabilities
 curl -H "Authorization: Bearer $TOKEN" .../api/agent/prices
 # тот же duration: 5, разные model → 36 / 196 / 316 ₽

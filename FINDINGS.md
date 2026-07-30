@@ -422,6 +422,17 @@ seedream-4.5         txt2img 15 ₽    img2img 15 ₽
 
 Всё бесплатно, ключа уровня `read` + `generate` достаточно.
 
+Самый короткий путь — не curl, а команда:
+
+```bash
+pip install -e ".[mcp,dev]"
+mainager verify
+```
+
+Она заново отправляет запрос за каждым из девяти пунктов ниже и печатает,
+совпадает ли текущий ответ API с тем, что записано здесь. Ручные `curl` под
+каждым пунктом — на случай, если нужно посмотреть на сырой ответ самому.
+
 ```bash
 # §3, §4, §5 — расхождения каталогов
 curl -H "Authorization: Bearer $TOKEN" https://lk.vibemarketolog.ru/api/agent/capabilities
