@@ -23,6 +23,7 @@ from mainager.providers.vibemarketolog.capabilities import (
 )
 from mainager.providers.vibemarketolog.errors import VibeApiError
 from mainager.providers.vibemarketolog.pricing import VibePricer
+from mainager.verify import run_all as run_all_checks
 
 
 def _summarise_models(payload: dict[str, Any]) -> str:
@@ -143,6 +144,43 @@ async def _report_overspend(settings: Settings, from_file: Path | None) -> int:
     return 0
 
 
+async def _verify(settings: Settings) -> int:
+    """Re-measure every FINDINGS.md claim live and report match/differs/error.
+
+    Prints balance before and after so it is obvious nothing was spent — every
+    check here uses a free endpoint, never POST /generate or the MCP
+    generate_content tool.
+    """
+    async with VibePricer.client_for(settings) as client:
+        before = (await client.get("/balance")).json()
+    print(f"balance before: {before.get('balance')} RUB\n")
+
+    results = await run_all_checks(settings)
+
+    glyph = {"match": "OK  ", "differs": "DIFF", "error": "ERR "}
+    for r in results:
+        print(f"{glyph[r.outcome]} #{r.n}  {r.claim}")
+        print(f"      expected: {r.expected}")
+        print(f"      measured: {r.measured}")
+        if r.note:
+            print(f"      note:     {r.note}")
+        print()
+
+    matched = sum(1 for r in results if r.outcome == "match")
+    differed = sum(1 for r in results if r.outcome == "differs")
+    errored = sum(1 for r in results if r.outcome == "error")
+    print(
+        f"{matched} match, {differed} differ, {errored} could not be checked "
+        f"(of {len(results)} findings)"
+    )
+
+    async with VibePricer.client_for(settings) as client:
+        after = (await client.get("/balance")).json()
+    print(f"balance after:  {after.get('balance')} RUB")
+
+    return 1 if differed or errored else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mainager", description=__doc__)
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -171,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="read history from a JSON file instead of GET /generations",
     )
+    subcommands.add_parser(
+        "verify",
+        help="re-measure every FINDINGS.md claim against the live API (free endpoints only)",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -187,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
             return asyncio.run(_report_drift(settings, as_json=args.as_json))
         if args.command == "overspend":
             return asyncio.run(_report_overspend(settings, args.from_file))
+        if args.command == "verify":
+            return asyncio.run(_verify(settings))
     except VibeApiError as exc:
         print(f"error: {exc}", file=sys.stderr)
         if exc.required_scope:
