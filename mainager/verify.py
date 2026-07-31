@@ -38,6 +38,8 @@ from mainager.providers.vibemarketolog.pricing import VibePricer
 
 Outcome = Literal["match", "differs", "error"]
 
+_Check = Callable[["_Ctx"], Awaitable["CheckResult"]]
+
 #: A reachable URL for checks that need a source image. Content is irrelevant —
 #: only reachability matters, since pre_charge_validation HEAD-checks it.
 _IMG = "https://lk.vibemarketolog.ru/favicon.ico"
@@ -108,6 +110,46 @@ def _err(n: int, claim: str, exc: Exception, note: str = "") -> CheckResult:
         outcome="error",
         note=note,
     )
+
+
+def _catalog_parameter_names(capabilities: dict[str, Any]) -> frozenset[str]:
+    """Every model-specific parameter name the catalog declares, generation
+    models and text models together. Universal request fields (``type``,
+    ``model``, ``prompt``, ``strict``, ``idempotency_key``, ``callback_url``)
+    are excluded — those are already top-level tool arguments, not part of the
+    gap this check measures.
+    """
+    names: set[str] = set()
+    models = capabilities.get("models")
+    if isinstance(models, dict):
+        for entries in models.values():
+            if not isinstance(entries, dict):
+                continue
+            for entry in entries.values():
+                if not isinstance(entry, dict):
+                    continue
+                names.update(str(p) for p in (entry.get("required") or []) if p != "prompt")
+                names.update(str(p) for p in (entry.get("optional") or []))
+                names.update(str(k) for k in (entry.get("enums") or {}))
+    text_models = capabilities.get("text_models")
+    if isinstance(text_models, dict):
+        for raw in text_models.get("params") or []:
+            # Entries look like "prompt (required)" or "effort (low|medium|...)".
+            name = str(raw).split(" ", 1)[0].strip()
+            if name and name != "prompt":
+                names.add(name)
+    return frozenset(names)
+
+
+def _mcp_declared_param_names(input_schema: dict[str, Any] | None) -> frozenset[str]:
+    """Sub-parameters a tool's ``params`` property enumerates structurally.
+
+    Not the tool description's prose examples — the JSON Schema ``properties``
+    an agent could actually validate against without guessing.
+    """
+    properties = (input_schema or {}).get("properties") or {}
+    params_schema = properties.get("params") or {}
+    return frozenset((params_schema.get("properties") or {}).keys())
 
 
 # --- 1. strict absent from the MCP tool schemas -----------------------------
@@ -420,7 +462,51 @@ async def check_9_edit_pricing(ctx: _Ctx) -> CheckResult:
     )
 
 
-CHECKS: tuple[Callable[[_Ctx], Awaitable[CheckResult]], ...] = (
+# --- 10. the catalog's model parameters are not enumerated in the MCP schema
+
+_GENERATION_TOOL_NAMES = ("estimate_generation", "generate_content")
+
+
+async def check_10_mcp_param_coverage(ctx: _Ctx) -> CheckResult:
+    claim = (
+        "generation-tool params are structurally undeclared: none of the catalog's "
+        "model-specific parameters appear in the MCP inputSchema"
+    )
+    try:
+        from mainager.mcp_proxy import upstream_session
+    except ImportError as exc:
+        return _err(10, claim, exc, note="install the mcp extra: pip install -e '.[mcp]'")
+
+    try:
+        async with upstream_session(ctx.settings) as session:
+            listing = await session.list_tools()
+    except Exception as exc:
+        return _err(10, claim, exc)
+
+    catalog_params = _catalog_parameter_names(ctx.capabilities)
+    tools = {t.name: t for t in listing.tools if t.name in _GENERATION_TOOL_NAMES}
+
+    rows: list[str] = [f"catalog declares {len(catalog_params)} model-specific parameters"]
+    all_hold = len(tools) == len(_GENERATION_TOOL_NAMES) and len(catalog_params) > 0
+    for name in _GENERATION_TOOL_NAMES:
+        tool = tools.get(name)
+        if tool is None:
+            rows.append(f"{name}: not found")
+            all_hold = False
+            continue
+        declared = _mcp_declared_param_names(tool.inputSchema)
+        reachable = declared & catalog_params
+        rows.append(f"{name}.params declares {len(declared)} of them structurally")
+        all_hold = all_hold and not reachable
+
+    measured = "; ".join(rows)
+    expected = "0 of the catalog's parameters are declared in params.properties for either tool"
+    if all_hold:
+        return _ok(10, claim, expected, measured)
+    return _no(10, claim, expected, measured)
+
+
+CHECKS: tuple[_Check, ...] = (
     check_1_mcp_strict,
     check_2_valid_true_with_rejected,
     check_3_price_field_understates,
@@ -430,16 +516,51 @@ CHECKS: tuple[Callable[[_Ctx], Awaitable[CheckResult]], ...] = (
     check_7_undocumented_endpoints,
     check_8_inbox_economics,
     check_9_edit_pricing,
+    check_10_mcp_param_coverage,
 )
 
 
-async def run_all(settings: Settings) -> list[CheckResult]:
-    """Run every check and return the results in order.
+def check_slug(check: _Check) -> str:
+    """The demo-friendly name for a check, e.g. ``mcp_strict`` for ``check_1_mcp_strict``.
+
+    Lets a single finding be reproduced on screen share with one short,
+    self-explanatory command — ``mainager verify --only mcp_strict`` — instead
+    of running all nine and pointing at a row.
+    """
+    return check.__name__.split("_", 2)[-1]
+
+
+CHECK_BY_SLUG: dict[str, _Check] = {check_slug(check): check for check in CHECKS}
+CHECK_BY_NUMBER: dict[int, _Check] = {int(check.__name__.split("_")[1]): check for check in CHECKS}
+
+
+def resolve_selection(selectors: tuple[str, ...]) -> tuple[_Check, ...]:
+    """Turn CLI ``--only`` values (numbers or slugs) into an ordered check list."""
+    chosen: dict[str, _Check] = {}
+    unknown: list[str] = []
+    for selector in selectors:
+        if selector.isdigit():
+            check = CHECK_BY_NUMBER.get(int(selector))
+        else:
+            check = CHECK_BY_SLUG.get(selector)
+        if check is None:
+            unknown.append(selector)
+        else:
+            chosen[check_slug(check)] = check
+    if unknown:
+        available = ", ".join(f"{n}:{check_slug(c)}" for n, c in sorted(CHECK_BY_NUMBER.items()))
+        raise ValueError(f"unknown check(s): {', '.join(unknown)}. Available: {available}")
+    return tuple(c for c in CHECKS if check_slug(c) in chosen)
+
+
+async def run_all(settings: Settings, only: tuple[str, ...] = ()) -> list[CheckResult]:
+    """Run every check — or, with ``only``, the named/numbered subset — in order.
 
     Never raises on an individual check's failure — a broken check is reported
     as an ``error`` row, not a crash, so one dead endpoint does not hide the
-    other eight answers.
+    other answers.
     """
+    checks = resolve_selection(only) if only else CHECKS
     async with VibePricer.client_for(settings) as client:
         cap_response = await client.get("/capabilities")
         if cap_response.is_error:
@@ -454,7 +575,7 @@ async def run_all(settings: Settings) -> list[CheckResult]:
         ctx = _Ctx(settings, client, capabilities, registry, price_response.json())
 
         results: list[CheckResult] = []
-        for check in CHECKS:
+        for check in checks:
             try:
                 results.append(await check(ctx))
             except Exception as exc:

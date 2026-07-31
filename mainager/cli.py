@@ -23,6 +23,7 @@ from mainager.providers.vibemarketolog.capabilities import (
 )
 from mainager.providers.vibemarketolog.errors import VibeApiError
 from mainager.providers.vibemarketolog.pricing import VibePricer
+from mainager.verify import CHECK_BY_NUMBER, check_slug
 from mainager.verify import run_all as run_all_checks
 
 
@@ -144,7 +145,13 @@ async def _report_overspend(settings: Settings, from_file: Path | None) -> int:
     return 0
 
 
-async def _verify(settings: Settings) -> int:
+def _list_checks() -> int:
+    for n, check in sorted(CHECK_BY_NUMBER.items()):
+        print(f"{n:>2}  {check_slug(check)}")
+    return 0
+
+
+async def _verify(settings: Settings, only: tuple[str, ...]) -> int:
     """Re-measure every FINDINGS.md claim live and report match/differs/error.
 
     Prints balance before and after so it is obvious nothing was spent — every
@@ -155,7 +162,7 @@ async def _verify(settings: Settings) -> int:
         before = (await client.get("/balance")).json()
     print(f"balance before: {before.get('balance')} RUB\n")
 
-    results = await run_all_checks(settings)
+    results = await run_all_checks(settings, only=only)
 
     glyph = {"match": "OK  ", "differs": "DIFF", "error": "ERR "}
     for r in results:
@@ -209,9 +216,22 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="read history from a JSON file instead of GET /generations",
     )
-    subcommands.add_parser(
+    verify_cmd = subcommands.add_parser(
         "verify",
         help="re-measure every FINDINGS.md claim against the live API (free endpoints only)",
+    )
+    verify_cmd.add_argument(
+        "--only",
+        action="append",
+        default=[],
+        metavar="CHECK",
+        help="run one finding in isolation, by number or slug (see --list); repeatable",
+    )
+    verify_cmd.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_checks",
+        help="print every check's number and slug, then exit",
     )
     args = parser.parse_args(argv)
 
@@ -230,7 +250,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "overspend":
             return asyncio.run(_report_overspend(settings, args.from_file))
         if args.command == "verify":
-            return asyncio.run(_verify(settings))
+            if args.list_checks:
+                return _list_checks()
+            return asyncio.run(_verify(settings, only=tuple(args.only)))
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     except VibeApiError as exc:
         print(f"error: {exc}", file=sys.stderr)
         if exc.required_scope:

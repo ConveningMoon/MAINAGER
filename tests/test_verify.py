@@ -14,11 +14,19 @@ import json
 from pathlib import Path
 
 import httpx
+import pytest
 import respx
 
 from mainager.config import Settings
 from mainager.preflight.registry import ModelRegistry
-from mainager.verify import DOCS_URL, run_all
+from mainager.verify import (
+    DOCS_URL,
+    _catalog_parameter_names,
+    _mcp_declared_param_names,
+    check_slug,
+    resolve_selection,
+    run_all,
+)
 
 SNAPSHOT_DIR = Path(__file__).resolve().parent.parent / "data"
 CAPABILITIES = json.loads((SNAPSHOT_DIR / "capabilities.json").read_text(encoding="utf-8"))
@@ -107,11 +115,13 @@ async def test_all_checks_pass_against_the_measured_figures(
 
     results = await run_all(_settings(tmp_path))
 
-    assert len(results) == 9
+    assert len(results) == 10
     outcomes = {r.n: r.outcome for r in results}
-    # Check 1 (MCP) has no network mock here and is expected to error cleanly
-    # rather than crash the run — covered on its own below.
+    # Checks 1 and 10 (MCP) have no network mock here and are expected to
+    # error cleanly rather than crash the run — check 1 covered on its own
+    # below; check 10 needs the same tools/list call.
     assert outcomes[1] == "error"
+    assert outcomes[10] == "error"
     for n in (2, 3, 5, 6, 7, 8, 9):
         assert outcomes[n] == "match", f"check {n}: {[r for r in results if r.n == n]}"
     # check 4 is the one finding whose "match" means the two sources disagree;
@@ -319,13 +329,15 @@ async def test_a_broken_check_does_not_hide_the_others(
 
     results = await run_all(_settings(tmp_path))
 
-    assert len(results) == 9
+    assert len(results) == 10
     # checks 4, 5, 7 never call /generate/estimate and should still resolve.
     for n in (4, 5, 7):
         assert next(r for r in results if r.n == n).outcome != "error"
     # checks that do call it should report the failure as an error, not crash.
     for n in (2, 3, 6, 9):
         assert next(r for r in results if r.n == n).outcome == "error"
+    # check 10 needs MCP tools/list, which is not mocked in this scenario either.
+    assert next(r for r in results if r.n == 10).outcome == "error"
 
 
 async def test_nothing_ever_posts_to_generate_or_calls_generate_content(
@@ -340,3 +352,67 @@ async def test_nothing_ever_posts_to_generate_or_calls_generate_content(
     await run_all(_settings(tmp_path))
 
     assert charge_route.call_count == 0
+
+
+def test_catalog_parameter_names_unions_models_and_text_models() -> None:
+    capabilities = {
+        "models": {
+            "image": {
+                "z-image": {"required": ["prompt"], "optional": ["aspect_ratio"]},
+            },
+            "video": {
+                "grok-itv": {
+                    "required": ["prompt", "image_urls"],
+                    "optional": ["duration"],
+                    "enums": {"resolution": ["480p", "720p"]},
+                },
+            },
+        },
+        "text_models": {"params": ["prompt (required)", "effort (low|medium|high)", "thinking"]},
+    }
+
+    names = _catalog_parameter_names(capabilities)
+
+    assert names == {"aspect_ratio", "image_urls", "duration", "resolution", "effort", "thinking"}
+    assert "prompt" not in names  # universal field, already a top-level tool argument
+
+
+def test_mcp_declared_param_names_reads_the_nested_schema() -> None:
+    empty = {"type": "object", "properties": {"params": {"type": "object", "description": "..."}}}
+    assert _mcp_declared_param_names(empty) == frozenset()
+
+    typed = {
+        "type": "object",
+        "properties": {
+            "params": {
+                "type": "object",
+                "properties": {"aspect_ratio": {"type": "string"}, "duration": {"type": "integer"}},
+            }
+        },
+    }
+    assert _mcp_declared_param_names(typed) == {"aspect_ratio", "duration"}
+    assert _mcp_declared_param_names(None) == frozenset()
+
+
+def test_resolve_selection_accepts_numbers_and_slugs() -> None:
+    by_number = resolve_selection(("1",))
+    by_slug = resolve_selection(("mcp_strict",))
+    assert [check_slug(c) for c in by_number] == ["mcp_strict"]
+    assert by_number == by_slug
+
+
+def test_resolve_selection_rejects_unknown_selectors() -> None:
+    with pytest.raises(ValueError, match="unknown check"):
+        resolve_selection(("nonexistent_slug",))
+
+
+async def test_run_all_with_only_runs_a_single_check(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """The isolated-demo path: one finding, one command, one row back."""
+    _mock_common(respx_mock, estimate_side_effect=_default_estimate)
+
+    results = await run_all(_settings(tmp_path), only=("edit_pricing",))
+
+    assert len(results) == 1
+    assert results[0].n == 9
