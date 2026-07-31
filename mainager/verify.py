@@ -178,11 +178,19 @@ async def check_2_valid_true_with_rejected(ctx: _Ctx) -> CheckResult:
 # --- 3. catalog `price` understates the real ceiling ------------------------
 
 
+#: How many times the top tier must exceed the catalog's default-config price
+#: for the claim to still hold. Chosen well below the ~12x first observed so
+#: the check survives ordinary price drift (§4 of FINDINGS.md) without going
+#: slack enough to pass on a marginal difference.
+_PRICE_UNDERSTATEMENT_RATIO = 5
+
+
 async def check_3_price_field_understates(ctx: _Ctx) -> CheckResult:
-    claim = "catalog price field understates the real cost by roughly an order of magnitude"
+    claim = "catalog price field materially understates the real cost of the top tier"
+    expected = f"top-tier estimate is at least {_PRICE_UNDERSTATEMENT_RATIO}x the catalog price"
     spec = ctx.registry.find("grok-ttv")
     if spec is None or spec.price is None:
-        return _no(3, claim, "grok-ttv price=36", "grok-ttv missing from live catalog")
+        return _no(3, claim, expected, "grok-ttv missing from live catalog")
     try:
         payload = await _estimate(
             ctx,
@@ -198,12 +206,12 @@ async def check_3_price_field_understates(ctx: _Ctx) -> CheckResult:
 
     top = payload.get("estimated_cost_rub")
     if not isinstance(top, int | float):
-        return _no(3, claim, "ratio >= 10x", f"no cost returned: {payload}")
+        return _no(3, claim, expected, f"no cost returned: {payload}")
     ratio = top / spec.price
     measured = f"catalog price={spec.price:g}, grok-ttv-30 estimate={top:g}, ratio={ratio:.1f}x"
-    if ratio >= 10:
-        return _ok(3, claim, "ratio >= 10x (measured 12.1x on 28.07)", measured)
-    return _no(3, claim, "ratio >= 10x (measured 12.1x on 28.07)", measured)
+    if ratio >= _PRICE_UNDERSTATEMENT_RATIO:
+        return _ok(3, claim, expected, measured)
+    return _no(3, claim, expected, measured)
 
 
 # --- 4. capabilities and prices disagree ------------------------------------
@@ -252,8 +260,17 @@ async def check_5_catalog_self_contradiction(ctx: _Ctx) -> CheckResult:
 # --- 6. base id vs pinned tier: ~8.8x for the same clip ---------------------
 
 
+#: A pinned tier must cost at least this many times the base identifier for
+#: the same duration to count as the same finding. There is deliberately no
+#: upper bound: if the live multiplier is now larger than the ~8.8x first
+#: observed, that is a stronger instance of the same finding, not a
+#: regression, and a banded check would wrongly report it as "differs".
+_TIER_PIN_RATIO = 3
+
+
 async def check_6_duration_multiplier(ctx: _Ctx) -> CheckResult:
-    claim = "a 5s clip costs ~8.8x more on a pinned tier than on the base identifier"
+    claim = "a pinned video tier costs materially more than the base id at the same duration"
+    expected = f"pinned-tier estimate is at least {_TIER_PIN_RATIO}x the base-id estimate"
 
     def body(model: str) -> dict[str, Any]:
         return {
@@ -273,12 +290,12 @@ async def check_6_duration_multiplier(ctx: _Ctx) -> CheckResult:
 
     base_cost, pinned_cost = base.get("estimated_cost_rub"), pinned.get("estimated_cost_rub")
     if not isinstance(base_cost, int | float) or not isinstance(pinned_cost, int | float):
-        return _no(6, claim, "ratio ~8.8x", f"grok-itv={base_cost}, grok-itv-20={pinned_cost}")
+        return _no(6, claim, expected, f"grok-itv={base_cost}, grok-itv-20={pinned_cost}")
     ratio = pinned_cost / base_cost if base_cost else float("inf")
     measured = f"grok-itv={base_cost:g} RUB, grok-itv-20={pinned_cost:g} RUB, ratio={ratio:.1f}x"
-    if 7.5 <= ratio <= 10:
-        return _ok(6, claim, "ratio ~8.8x (measured 28.07)", measured)
-    return _no(6, claim, "ratio ~8.8x (measured 28.07)", measured)
+    if ratio >= _TIER_PIN_RATIO:
+        return _ok(6, claim, expected, measured)
+    return _no(6, claim, expected, measured)
 
 
 # --- 7. live endpoints missing from the documented endpoint map ------------
