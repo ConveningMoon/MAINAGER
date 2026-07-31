@@ -239,13 +239,13 @@
   <p class="kicker">внешний аудит · 28.07.2026 · потрачено 1,2 ₽</p>
   <h1>Где ваш Agent API <em>теряет деньги</em> клиента</h1>
   <p class="lede">Разбор <code>lk.vibemarketolog.ru/api/agent</code> и MCP-коннектора:
-  девять мест, где документация, каталог и прайс расходятся с тем, что реально
+  десять мест, где документация, каталог и прайс расходятся с тем, что реально
   списывается. Все цифры получены замерами, а не чтением.</p>
   <p class="stamp">28.07.2026 · api_version 1.0.0 · MCP 1.1.0 · ключ уровня read+generate ·
   потрачено на весь аудит: <b>1,2 ₽ из 600</b> · <a href="./tests.html" style="color:inherit">как проверялось</a></p>
 </header>
 
-<p class="sub">Ниже — только то, что удалось измерить. Все девять находок доказаны
+<p class="sub">Ниже — только то, что удалось измерить. Все десять находок доказаны
 бесплатными эндпоинтами: <code>GET</code> и <code>POST /generate/estimate</code>, который
 ничего не списывает. Отдельная пара платных вызовов на 1,2 ₽ ушла на единственный
 вопрос, который иначе не проверить — он разобран во вкладке
@@ -821,7 +821,7 @@ trap body → generate_content
   сразу — не curl, а команда из репозитория:</p>
   <pre style="margin-top:12px">pip install -e ".[mcp,dev]"
 mainager verify
-# заново измеряет все девять пунктов и печатает: сходится или нет</pre>
+# заново измеряет все десять пунктов и печатает: сходится или нет</pre>
   <pre style="margin-top:12px">curl -H "Authorization: Bearer $TOKEN" .../api/agent/capabilities
 curl -H "Authorization: Bearer $TOKEN" .../api/agent/prices
 # тот же duration: 5, разные model → 36 / 196 / 316 ₽
